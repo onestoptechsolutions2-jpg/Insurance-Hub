@@ -1,13 +1,13 @@
 version: "3.9"
 
 # ── Coolify Deployment ────────────────────────────────────────────────────────
-# Required environment variables to set in Coolify → Environment Variables tab:
+# Required env vars → set in Coolify Environment Variables tab:
 #
-#   DB_PASSWORD        → strong password for PostgreSQL  (REQUIRED)
-#   AGENT_EMAIL        → inbox that receives quote alerts (REQUIRED)
-#   SMTP_HOST          → e.g. smtp.gmail.com             (optional)
-#   SMTP_SENDER_EMAIL  → e.g. noreply@yourdomain.com     (optional)
-#   SMTP_PASSWORD      → SMTP / app password             (optional)
+#   DB_PASSWORD        strong password for PostgreSQL        (REQUIRED)
+#   AGENT_EMAIL        inbox that receives quote alerts      (REQUIRED)
+#   SMTP_HOST          e.g. smtp.gmail.com                   (optional)
+#   SMTP_SENDER_EMAIL  e.g. noreply@yourdomain.com           (optional)
+#   SMTP_PASSWORD      SMTP / app password                   (optional)
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -23,10 +23,10 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U insurancehub -d InsuranceHub"]
-      interval: 10s
-      timeout: 5s
+      interval: 15s
+      timeout: 10s
       retries: 10
-      start_period: 20s
+      start_period: 30s
 
   app:
     build:
@@ -63,3 +63,4 @@ services:
 
 volumes:
   pgdata:
+    name: insurancehub_pgdata   # fixed name — survives redeployments without conflict
