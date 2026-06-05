@@ -5,6 +5,7 @@ version: "3.9"
 #
 #   DB_PASSWORD        strong password for PostgreSQL        (REQUIRED)
 #   AGENT_EMAIL        inbox that receives quote alerts      (REQUIRED)
+#   APP_PORT           host port to expose the app on        (default: 8080)
 #   SMTP_HOST          e.g. smtp.gmail.com                   (optional)
 #   SMTP_SENDER_EMAIL  e.g. noreply@yourdomain.com           (optional)
 #   SMTP_PASSWORD      SMTP / app password                   (optional)
@@ -33,8 +34,13 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    expose:
-      - "8080"
+
+    # ── Port mapping ───────────────────────────────────────────────────────
+    # APP_PORT = the host port Coolify/Traefik routes to
+    # Default 8080 — change via APP_PORT env var if that port is already taken
+    ports:
+      - "${APP_PORT:-8080}:8080"
+
     environment:
       ASPNETCORE_ENVIRONMENT:        Production
       DOTNET_RUNNING_IN_CONTAINER:   "true"
@@ -63,4 +69,4 @@ services:
 
 volumes:
   pgdata:
-    name: insurancehub_pgdata   # fixed name — survives redeployments without conflict
+    name: insurancehub_pgdata
