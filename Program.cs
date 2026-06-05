@@ -1,5 +1,6 @@
 using Insurance_Hub.Data;
 using Insurance_Hub.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,11 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+// ── Data Protection — store keys in PostgreSQL so sessions survive restarts ─
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<ApplicationDbContext>()
+    .SetApplicationName("InsuranceHub");
 
 // ── Email service ──────────────────────────────────────────────────────────
 // Configure via env vars:

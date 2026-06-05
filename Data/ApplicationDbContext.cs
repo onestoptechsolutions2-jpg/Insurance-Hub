@@ -1,15 +1,19 @@
 using Insurance_Hub.Models;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Insurance_Hub.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext, IDataProtectionKeyContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
+
+        // DataProtection keys — persisted to DB so sessions survive container restarts
+        public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
         public DbSet<Provider> Providers => Set<Provider>();
         public DbSet<InsurancePlan> InsurancePlans => Set<InsurancePlan>();
