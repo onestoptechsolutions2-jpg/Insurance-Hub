@@ -1,0 +1,111 @@
+@model List<Insurance_Hub.Models.QuoteRequest>
+@using Insurance_Hub.Models
+
+@{
+    var filter = ViewBag.StatusFilter as string;
+}
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Quote Requests</h1>
+        <p class="a-page-sub">@Model.Count quote(s) shown</p>
+    </div>
+    <div class="a-filter-bar">
+        <a href="/admin/quotes" class="a-filter-btn @(filter == null ? "active" : "")">All</a>
+        <a href="/admin/quotes?status=New"       class="a-filter-btn @(filter == "New"       ? "active" : "")">New</a>
+        <a href="/admin/quotes?status=Contacted" class="a-filter-btn @(filter == "Contacted" ? "active" : "")">Contacted</a>
+        <a href="/admin/quotes?status=Closed"    class="a-filter-btn @(filter == "Closed"    ? "active" : "")">Closed</a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="a-empty">No quotes found.</div>
+}
+else
+{
+    <div class="a-table-wrap">
+        <table class="a-table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Plan</th>
+                    <th>Provider</th>
+                    <th>Premium</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var q in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="a-cell-primary">@q.FullName</div>
+                            <div class="a-cell-sub">@q.Email</div>
+                        </td>
+                        <td>
+                            <div class="a-cell-primary">@q.PlanName</div>
+                            <div class="a-cell-sub">@q.InsuranceType</div>
+                        </td>
+                        <td>@q.ProviderName</td>
+                        <td>KES @q.MonthlyPremium.ToString("N0")/mo</td>
+                        <td class="a-cell-sub">@q.RequestedAt.ToString("d MMM yyyy")</td>
+                        <td>
+                            <span class="a-status a-status-@q.Status.ToString().ToLower()">@q.Status</span>
+                        </td>
+                        <td class="a-cell-sub">@(string.IsNullOrWhiteSpace(q.AdminNotes) ? "—" : q.AdminNotes)</td>
+                        <td>
+                            <button class="a-btn-sm" onclick="openQuoteModal(@q.Id, '@q.Status', '@q.AdminNotes.Replace("'","\\'")')">Update</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Quote update modal -->
+<div id="quoteModal" class="a-modal-overlay" style="display:none">
+    <div class="a-modal">
+        <h3 class="a-modal-title">Update Quote</h3>
+        <form id="quoteForm" method="post">
+            @Html.AntiForgeryToken()
+            <div class="a-form-group">
+                <label class="a-label">Status</label>
+                <select name="status" id="quoteStatus" class="a-select">
+                    <option value="New">New</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Closed">Closed</option>
+                </select>
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Notes</label>
+                <textarea name="adminNotes" id="quoteNotes" class="a-textarea" rows="3" placeholder="Internal notes…"></textarea>
+            </div>
+            <div class="a-modal-actions">
+                <button type="button" class="a-btn-ghost" onclick="closeQuoteModal()">Cancel</button>
+                <button type="submit" class="a-btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function openQuoteModal(id, status, notes) {
+        document.getElementById('quoteForm').action = '/admin/quotes/' + id + '/status';
+        document.getElementById('quoteStatus').value = status;
+        document.getElementById('quoteNotes').value = notes;
+        document.getElementById('quoteModal').style.display = 'flex';
+    }
+    function closeQuoteModal() {
+        document.getElementById('quoteModal').style.display = 'none';
+    }
+    document.getElementById('quoteModal').addEventListener('click', function(e) {
+        if (e.target === this) closeQuoteModal();
+    });
+</script>
+}

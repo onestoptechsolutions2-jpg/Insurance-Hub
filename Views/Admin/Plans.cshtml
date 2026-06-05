@@ -1,0 +1,47 @@
+@model List<Insurance_Hub.Models.InsurancePlan>
+@using Insurance_Hub.Models
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Plans</h1>
+        <p class="a-page-sub">@Model.Count plan(s)</p>
+    </div>
+    <a href="/admin/plans/create" class="a-btn-primary">+ New Plan</a>
+</div>
+
+<div class="a-table-wrap">
+    <table class="a-table">
+        <thead>
+            <tr>
+                <th>Plan</th>
+                <th>Type</th>
+                <th>Tier</th>
+                <th>Provider</th>
+                <th>Premium/mo</th>
+                <th>Popular</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td class="a-cell-primary">@p.PlanName</td>
+                    <td><span class="a-plan-type">@p.Type</span></td>
+                    <td>@p.Tier</td>
+                    <td>@p.Provider?.Name</td>
+                    <td>KES @p.MonthlyPremium.ToString("N0")</td>
+                    <td>@(p.IsPopular ? "✓" : "—")</td>
+                    <td class="a-row-actions">
+                        <a href="/admin/plans/@p.Id/edit" class="a-btn-sm">Edit</a>
+                        <form method="post" action="/admin/plans/@p.Id/delete" style="display:inline"
+                              onsubmit="return confirm('Delete @p.PlanName?')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="a-btn-sm a-btn-sm-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

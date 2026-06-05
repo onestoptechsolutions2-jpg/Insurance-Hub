@@ -1,0 +1,80 @@
+@model Insurance_Hub.Models.ApplicationUser
+@using Insurance_Hub.Models
+
+@{
+    Layout = "_Layout";
+    var quotes = ViewBag.Quotes as List<QuoteRequest> ?? new();
+}
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="toast toast-success" id="toast">
+        <span>@ok</span>
+        <button class="toast-close" onclick="document.getElementById('toast').remove()">×</button>
+    </div>
+}
+
+<div class="profile-shell">
+
+    <div class="profile-card">
+        <div class="profile-avatar">@((string.IsNullOrWhiteSpace(Model.DisplayName) ? (Model.Email ?? "?") : Model.DisplayName)[0].ToString().ToUpper())</div>
+        <div>
+            <div class="profile-name">@(string.IsNullOrWhiteSpace(Model.DisplayName) ? Model.Email : Model.DisplayName)</div>
+            <div class="profile-email">@Model.Email</div>
+            @if (User.IsInRole("Admin"))
+            {
+                <span class="profile-role-badge">Admin</span>
+            }
+        </div>
+    </div>
+
+    <div class="profile-grid">
+
+        <section class="profile-section">
+            <h2 class="profile-section-title">Edit Profile</h2>
+            <form method="post" action="/profile" class="profile-form">
+                @Html.AntiForgeryToken()
+                <div class="profile-field">
+                    <label class="profile-label">Display Name</label>
+                    <input class="profile-input" name="displayName" value="@Model.DisplayName" placeholder="Your name" maxlength="100" />
+                </div>
+                <div class="profile-field">
+                    <label class="profile-label">Phone Number</label>
+                    <input class="profile-input" name="phoneNumber" value="@Model.PhoneNumber" placeholder="+254 700 000 000" />
+                </div>
+                <div class="profile-field">
+                    <label class="profile-label">Email</label>
+                    <input class="profile-input" value="@Model.Email" disabled />
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top:8px">Save Changes</button>
+            </form>
+        </section>
+
+        <section class="profile-section">
+            <h2 class="profile-section-title">My Quote Requests</h2>
+
+            @if (!quotes.Any())
+            {
+                <p class="profile-empty">No quote requests yet. <a href="/" class="profile-link">Browse plans →</a></p>
+            }
+            else
+            {
+                <div class="quotes-list">
+                    @foreach (var q in quotes)
+                    {
+                        <div class="quote-row">
+                            <div class="quote-row-info">
+                                <div class="quote-row-plan">@q.PlanName</div>
+                                <div class="quote-row-meta">@q.ProviderName · @q.InsuranceType · KES @q.MonthlyPremium.ToString("N0")/mo</div>
+                                <div class="quote-row-date">@q.RequestedAt.ToString("d MMM yyyy")</div>
+                            </div>
+                            <span class="quote-status quote-status-@q.Status.ToString().ToLower()">@q.Status</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+    </div>
+
+</div>

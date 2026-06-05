@@ -1,0 +1,69 @@
+@model List<Insurance_Hub.Models.ApplicationUser>
+
+@{
+    var userRoles = ViewBag.UserRoles as Dictionary<string, IList<string>>;
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Users</h1>
+        <p class="a-page-sub">@Model.Count registered user(s)</p>
+    </div>
+</div>
+
+<div class="a-table-wrap">
+    <table class="a-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Display Name</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                var roles  = userRoles?[user.Id] ?? new List<string>();
+                var isAdmin = roles.Contains("Admin");
+                var isSelf  = user.Id == currentUserId;
+
+                <tr>
+                    <td>
+                        <div class="a-cell-primary">@user.Email</div>
+                        <div class="a-cell-sub">@user.Id[..8]…</div>
+                    </td>
+                    <td>@(string.IsNullOrWhiteSpace(user.DisplayName) ? "—" : user.DisplayName)</td>
+                    <td>@(string.IsNullOrWhiteSpace(user.PhoneNumber) ? "—" : user.PhoneNumber)</td>
+                    <td>
+                        @if (isAdmin)
+                        {
+                            <span class="a-role-badge a-role-admin">Admin</span>
+                        }
+                        else
+                        {
+                            <span class="a-role-badge a-role-user">User</span>
+                        }
+                    </td>
+                    <td>
+                        @if (!isSelf)
+                        {
+                            <form method="post" action="/admin/users/@user.Id/toggle-admin">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="a-btn-sm @(isAdmin ? "a-btn-sm-danger" : "")">
+                                    @(isAdmin ? "Remove Admin" : "Make Admin")
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="a-cell-sub">You</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

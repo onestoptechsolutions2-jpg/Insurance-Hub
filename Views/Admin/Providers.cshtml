@@ -1,0 +1,44 @@
+@model List<Insurance_Hub.Models.Provider>
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Providers</h1>
+        <p class="a-page-sub">@Model.Count provider(s)</p>
+    </div>
+    <a href="/admin/providers/create" class="a-btn-primary">+ New Provider</a>
+</div>
+
+<div class="a-table-wrap">
+    <table class="a-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Country</th>
+                <th>Email</th>
+                <th>Website</th>
+                <th>Rating</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td class="a-cell-primary">@p.Name</td>
+                    <td>@p.Country</td>
+                    <td><a href="mailto:@p.ContactEmail" class="a-link">@p.ContactEmail</a></td>
+                    <td><a href="@p.Website" target="_blank" class="a-link">@p.Website</a></td>
+                    <td>@p.Rating.ToString("0.0") ★</td>
+                    <td class="a-row-actions">
+                        <a href="/admin/providers/@p.Id/edit" class="a-btn-sm">Edit</a>
+                        <form method="post" action="/admin/providers/@p.Id/delete" style="display:inline"
+                              onsubmit="return confirm('Delete @p.Name?')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="a-btn-sm a-btn-sm-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

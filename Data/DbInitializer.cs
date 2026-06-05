@@ -1,4 +1,5 @@
 using Insurance_Hub.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Insurance_Hub.Data
@@ -653,6 +654,15 @@ namespace Insurance_Hub.Data
 
             await context.InsurancePlans.AddRangeAsync(plans);
             await context.SaveChangesAsync();
+        }
+
+        public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
+        {
+            foreach (var role in new[] { "Admin", "User" })
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new IdentityRole(role));
+            }
         }
     }
 }

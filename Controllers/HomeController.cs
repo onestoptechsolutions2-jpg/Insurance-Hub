@@ -11,12 +11,12 @@ namespace Insurance_Hub.Controllers
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _db;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailService _email;
 
         public HomeController(
             ApplicationDbContext db,
-            UserManager<IdentityUser> userManager,
+            UserManager<ApplicationUser> userManager,
             IEmailService email)
         {
             _db          = db;

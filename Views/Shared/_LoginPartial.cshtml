@@ -1,15 +1,22 @@
+@using Insurance_Hub.Models
 @using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
 
 @if (SignInManager.IsSignedIn(User))
 {
-    var email = User.Identity?.Name ?? "";
-    var initial = email.Length > 0 ? email[0].ToString().ToUpper() : "U";
+    var user = await UserManager.GetUserAsync(User);
+    var label = !string.IsNullOrWhiteSpace(user?.DisplayName) ? user.DisplayName : (User.Identity?.Name ?? "");
+    var initial = label.Length > 0 ? label[0].ToString().ToUpper() : "U";
+    var isAdmin = User.IsInRole("Admin");
 
     <div class="nav-user">
-        <div class="nav-user-avatar" title="@email">@initial</div>
-        <span>@email</span>
+        @if (isAdmin)
+        {
+            <a href="/admin" class="nav-admin-badge">Admin</a>
+        }
+        <a href="/profile" class="nav-user-avatar" title="@label">@initial</a>
+        <a href="/profile" class="nav-username">@label</a>
         <form asp-area="Identity" asp-page="/Account/Logout"
               asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"
               method="post">

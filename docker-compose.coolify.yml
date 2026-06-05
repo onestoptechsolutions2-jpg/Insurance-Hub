@@ -43,6 +43,7 @@ services:
       ASPNETCORE_ENVIRONMENT:        Production
       DOTNET_RUNNING_IN_CONTAINER:   "true"
       ASPNETCORE_URLS:               "http://+:8080"
+      HTTP_PORTS:                    ""
 
       DatabaseProvider:              PostgreSQL
       ConnectionStrings__PostgreSQL: "Host=db;Port=5432;Database=InsuranceHub;Username=insurancehub;Password=${DB_PASSWORD}"

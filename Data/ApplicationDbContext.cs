@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Insurance_Hub.Data
 {
-    public class ApplicationDbContext : IdentityDbContext, IDataProtectionKeyContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -61,6 +61,8 @@ namespace Insurance_Hub.Data
                 entity.Property(q => q.InsuranceType).HasMaxLength(50);
                 entity.Property(q => q.ProviderName).HasMaxLength(200);
                 entity.Property(q => q.RequestedAt).HasDefaultValueSql("now()");
+                entity.Property(q => q.Status).HasConversion<string>().HasMaxLength(20);
+                entity.Property(q => q.AdminNotes).HasMaxLength(1000);
             });
         }
     }

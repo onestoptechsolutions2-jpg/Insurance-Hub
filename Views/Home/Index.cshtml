@@ -1,6 +1,7 @@
 @model List<Insurance_Hub.Models.InsurancePlan>
+@using Insurance_Hub.Models
 @using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
+@inject SignInManager<ApplicationUser> SignInManager
 
 @{
     var activeType = ViewBag.ActiveType as string ?? "All";

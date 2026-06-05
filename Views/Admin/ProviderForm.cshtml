@@ -1,0 +1,58 @@
+@model Insurance_Hub.Models.Provider
+
+@{
+    var isNew  = Model.Id == 0;
+    var action = isNew ? "/admin/providers/create" : $"/admin/providers/{Model.Id}/edit";
+}
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">@(isNew ? "New Provider" : "Edit Provider")</h1>
+    </div>
+    <a href="/admin/providers" class="a-btn-ghost">← Back</a>
+</div>
+
+<div class="a-form-card">
+    <form method="post" action="@action">
+        @Html.AntiForgeryToken()
+        @if (!isNew)
+        {
+            <input type="hidden" name="Id" value="@Model.Id" />
+        }
+
+        <div class="a-form-grid">
+            <div class="a-form-group a-span-2">
+                <label class="a-label">Name</label>
+                <input class="a-input" name="Name" value="@Model.Name" required maxlength="200" />
+            </div>
+
+            <div class="a-form-group">
+                <label class="a-label">Country</label>
+                <input class="a-input" name="Country" value="@Model.Country" maxlength="100" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Rating (0–5)</label>
+                <input class="a-input" name="Rating" type="number" step="0.1" min="0" max="5" value="@Model.Rating" />
+            </div>
+
+            <div class="a-form-group">
+                <label class="a-label">Contact Email</label>
+                <input class="a-input" name="ContactEmail" type="email" value="@Model.ContactEmail" required maxlength="254" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Website</label>
+                <input class="a-input" name="Website" value="@Model.Website" maxlength="300" />
+            </div>
+
+            <div class="a-form-group a-span-2">
+                <label class="a-label">Description</label>
+                <textarea class="a-textarea" name="Description" rows="3" maxlength="1000">@Model.Description</textarea>
+            </div>
+        </div>
+
+        <div class="a-form-actions">
+            <a href="/admin/providers" class="a-btn-ghost">Cancel</a>
+            <button type="submit" class="a-btn-primary">@(isNew ? "Create Provider" : "Save Changes")</button>
+        </div>
+    </form>
+</div>

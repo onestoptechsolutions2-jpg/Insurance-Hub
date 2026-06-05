@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Insurance_Hub.Models
 {
+    public enum QuoteStatus { New, Contacted, Closed }
+
     public class QuoteRequest
     {
         public int Id { get; set; }
@@ -24,5 +26,10 @@ namespace Insurance_Hub.Models
 
         // Optional: link to Identity user if logged in
         public string? UserId { get; set; }
+
+        public QuoteStatus Status { get; set; } = QuoteStatus.New;
+
+        [MaxLength(1000)]
+        public string AdminNotes { get; set; } = string.Empty;
     }
 }
