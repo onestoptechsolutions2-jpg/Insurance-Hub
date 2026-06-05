@@ -1,9 +1,14 @@
 version: "3.9"
 
-# ── Coolify Deployment — builds from source, includes managed PostgreSQL ──────
-# In Coolify:
-#   Docker Compose Location → /docker-compose.coolify.yml
-#   Then set Environment Variables (see list below)
+# ── Coolify Deployment ────────────────────────────────────────────────────────
+# Required environment variables to set in Coolify → Environment Variables tab:
+#
+#   DB_PASSWORD        → strong password for PostgreSQL  (REQUIRED)
+#   AGENT_EMAIL        → inbox that receives quote alerts (REQUIRED)
+#   SMTP_HOST          → e.g. smtp.gmail.com             (optional)
+#   SMTP_SENDER_EMAIL  → e.g. noreply@yourdomain.com     (optional)
+#   SMTP_PASSWORD      → SMTP / app password             (optional)
+# ─────────────────────────────────────────────────────────────────────────────
 
 services:
 
@@ -11,16 +16,17 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       ${POSTGRES_DB:-InsuranceHub}
-      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       InsuranceHub
+      POSTGRES_USER:     insurancehub
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U insurancehub -d InsuranceHub"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
 
   app:
     build:
@@ -34,18 +40,16 @@ services:
       DOTNET_RUNNING_IN_CONTAINER:   "true"
       ASPNETCORE_URLS:               "http://+:8080"
 
-      # Database — built from the db service above
       DatabaseProvider:              PostgreSQL
-      ConnectionStrings__PostgreSQL: "Host=db;Port=5432;Database=${POSTGRES_DB:-InsuranceHub};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}"
+      ConnectionStrings__PostgreSQL: "Host=db;Port=5432;Database=InsuranceHub;Username=insurancehub;Password=${DB_PASSWORD}"
 
-      # Email — set these in Coolify Environment Variables
       EmailSettings__SmtpHost:       ${SMTP_HOST:-}
       EmailSettings__SmtpPort:       ${SMTP_PORT:-587}
       EmailSettings__UseSsl:         ${SMTP_USE_SSL:-true}
       EmailSettings__SenderEmail:    ${SMTP_SENDER_EMAIL:-noreply@insurancehub.com}
-      EmailSettings__SenderName:     ${SMTP_SENDER_NAME:-InsuranceHub}
+      EmailSettings__SenderName:     InsuranceHub
       EmailSettings__SenderPassword: ${SMTP_PASSWORD:-}
-      EmailSettings__AgentEmail:     ${AGENT_EMAIL:-agent@insurancehub.com}
+      EmailSettings__AgentEmail:     ${AGENT_EMAIL:-}
 
     depends_on:
       db:
