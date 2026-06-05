@@ -1,0 +1,56 @@
+@page
+@model RegisterModel
+
+@{
+    ViewData["Title"] = "Create account";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<h2>Create your account</h2>
+<p class="auth-subtitle">Start comparing insurance plans today</p>
+
+<div asp-validation-summary="ModelOnly" class="auth-alert" role="alert"></div>
+
+<form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+
+    <div class="auth-field">
+        <label asp-for="Input.Email">Email address</label>
+        <input asp-for="Input.Email"
+               type="email"
+               autocomplete="username"
+               placeholder="you@example.com"
+               aria-required="true" />
+        <span asp-validation-for="Input.Email" class="text-danger"></span>
+    </div>
+
+    <div class="auth-field">
+        <label asp-for="Input.Password">Password</label>
+        <input asp-for="Input.Password"
+               type="password"
+               autocomplete="new-password"
+               placeholder="Min. 6 characters"
+               aria-required="true" />
+        <span asp-validation-for="Input.Password" class="text-danger"></span>
+    </div>
+
+    <div class="auth-field">
+        <label asp-for="Input.ConfirmPassword">Confirm password</label>
+        <input asp-for="Input.ConfirmPassword"
+               type="password"
+               autocomplete="new-password"
+               placeholder="Repeat your password"
+               aria-required="true" />
+        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+    </div>
+
+    <button id="registerSubmit" type="submit" class="auth-btn">Create account</button>
+
+    <div class="auth-links">
+        <span>Already have an account? <a asp-page="./Login">Sign in</a></span>
+    </div>
+
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,155 @@
+@model List<Insurance_Hub.Models.InsurancePlan>
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+
+@{
+    var activeType = ViewBag.ActiveType as string ?? "All";
+    var types = new[] { "All", "Life", "Health", "Motor", "Home", "Travel", "Business", "Agriculture", "Micro" };
+}
+
+@* ── Toast ───────────────────────────────────────────────────────────────── *@
+@if (TempData["QuoteSuccess"] is string success)
+{
+    <div class="toast toast-success" id="toast">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>@success</span>
+        <button class="toast-close" onclick="document.getElementById('toast').remove()">×</button>
+    </div>
+}
+@if (TempData["QuoteError"] is string error)
+{
+    <div class="toast toast-error" id="toast">
+        <span>@error</span>
+        <button class="toast-close" onclick="document.getElementById('toast').remove()">×</button>
+    </div>
+}
+
+@* ── Hero ────────────────────────────────────────────────────────────────── *@
+<section class="hero">
+    <div class="hero-tag">Kenya's Insurance Supermarket</div>
+    <h1>Find the right cover,<br/>at the right price.</h1>
+    <p>Compare plans from Sanlam, Britam, Jubilee, AAR, Old Mutual, ICEA Lion, APA & CIC — all in one place.</p>
+    <div class="search-container">
+        <input id="searchBox" class="search-box" type="text"
+               placeholder="Search by plan name, provider or type..." />
+    </div>
+</section>
+
+@* ── Filter tabs ─────────────────────────────────────────────────────────── *@
+<div class="filter-tabs">
+    @foreach (var t in types)
+    {
+        var active = t == activeType ? "filter-tab active" : "filter-tab";
+        var href   = t == "All" ? Url.Action("Index", "Home") : Url.Action("Index", "Home", new { type = t });
+        <a href="@href" class="@active">@t</a>
+    }
+</div>
+
+@* ── Plan grid ───────────────────────────────────────────────────────────── *@
+<section class="plans-grid">
+    @if (!Model.Any())
+    {
+        <p class="no-plans">No plans found for this category.</p>
+    }
+
+    @foreach (var plan in Model)
+    {
+        var stars = (int)Math.Round(plan.Rating);
+        var topFeatures = plan.FeatureList.Take(3);
+
+        <div class="plan-card insurance-plan" data-type="@plan.Type">
+
+            <div class="card-top-row">
+                <div class="plan-badge">@plan.Type</div>
+                @if (plan.IsPopular)
+                {
+                    <div class="popular-chip">Popular</div>
+                }
+            </div>
+
+            <div class="plan-title plan-name">@plan.PlanName</div>
+            <div class="plan-provider">@plan.Provider?.Name · @plan.Provider?.Country</div>
+
+            <div class="star-row card-stars">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <span class="star @(i <= stars ? "star-filled" : "star-empty")">★</span>
+                }
+                <span class="rating-num">@plan.Rating.ToString("0.0")</span>
+            </div>
+
+            <div class="plan-price">
+                KES @plan.MonthlyPremium.ToString("N2")<span class="plan-price-mo">/mo</span>
+            </div>
+
+            <ul class="card-features">
+                @foreach (var f in topFeatures)
+                {
+                    <li><span class="feature-check">✓</span> @f</li>
+                }
+            </ul>
+
+            <div class="card-actions">
+                <a href="@Url.Action("Details", "Home", new { id = plan.Id })"
+                   class="btn-secondary">View Details</a>
+
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <button class="btn-primary quote-btn"
+                            data-plan-id="@plan.Id"
+                            data-plan="@plan.PlanName"
+                            data-provider="@plan.Provider?.Name"
+                            data-premium="@plan.MonthlyPremium"
+                            data-type="@plan.Type"
+                            data-tier="@plan.Tier"
+                            data-coverage="@plan.CoverageLimit"
+                            data-features="@plan.Features">
+                        Get Quote
+                    </button>
+                }
+                else
+                {
+                    <a href="/Identity/Account/Login" class="btn-primary btn-outline">Sign in</a>
+                }
+            </div>
+
+        </div>
+    }
+</section>
+
+@* ── Quote modal ─────────────────────────────────────────────────────────── *@
+<div id="quoteModal" class="modal">
+    <div class="modal-content">
+        <span id="closeForm" class="close">&times;</span>
+        <div class="modal-plan-badge" id="modalBadge"></div>
+        <h2>Request a Quote</h2>
+        <p class="modal-plan-name" id="selectedPlan"></p>
+        <p class="modal-provider" id="modalProvider"></p>
+        <p class="modal-price" id="modalPrice"></p>
+
+        <form id="quoteForm" asp-action="RequestQuote" asp-controller="Home" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="planId"         id="hiddenPlanId" />
+            <input type="hidden" name="planName"       id="hiddenPlanName" />
+            <input type="hidden" name="planTier"       id="hiddenTier" />
+            <input type="hidden" name="providerName"   id="hiddenProvider" />
+            <input type="hidden" name="monthlyPremium" id="hiddenPremium" />
+            <input type="hidden" name="coverageLimit"  id="hiddenCoverage" />
+            <input type="hidden" name="insuranceType"  id="hiddenType" />
+            <input type="hidden" name="features"       id="hiddenFeatures" />
+
+            <div class="modal-field">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="fullName" placeholder="Jane Smith" required />
+            </div>
+            <div class="modal-field">
+                <label for="emailInput">Email Address</label>
+                <input type="email" id="emailInput" name="email" placeholder="jane@example.com" required />
+            </div>
+            <button type="submit" class="btn-primary full">Submit Request</button>
+        </form>
+    </div>
+</div>

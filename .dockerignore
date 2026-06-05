@@ -1,0 +1,14 @@
+**/.vs
+**/.git
+**/.gitignore
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/node_modules
+**/npm-debug.log
+**/Dockerfile*
+**/docker-compose*
+**/.env
+**/.env.*
+**/README.md

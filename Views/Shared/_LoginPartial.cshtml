@@ -1,0 +1,26 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    var email = User.Identity?.Name ?? "";
+    var initial = email.Length > 0 ? email[0].ToString().ToUpper() : "U";
+
+    <div class="nav-user">
+        <div class="nav-user-avatar" title="@email">@initial</div>
+        <span>@email</span>
+        <form asp-area="Identity" asp-page="/Account/Logout"
+              asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"
+              method="post">
+            <button type="submit" class="nav-signout">Sign out</button>
+        </form>
+    </div>
+}
+else
+{
+    <div class="nav-auth">
+        <a class="nav-auth-link" asp-area="Identity" asp-page="/Account/Login">Sign in</a>
+        <a class="nav-auth-btn"  asp-area="Identity" asp-page="/Account/Register">Get started</a>
+    </div>
+}

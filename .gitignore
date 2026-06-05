@@ -1,0 +1,26 @@
+## .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.log
+
+## Secrets & env
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+**/secrets.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## EF Core (keep migrations, exclude tools cache)
+*.dbmdl
+*.jfm
+
+## Node (if ever added)
+node_modules/
+npm-debug.log*

@@ -1,0 +1,60 @@
+version: "3.9"
+
+# ── Coolify Deployment Compose ────────────────────────────────────────────────
+#
+# HOW TO USE IN COOLIFY:
+#  1. Create a new resource → "Docker Compose"
+#  2. Point to this repo, set compose file to "docker-compose.coolify.yml"
+#  3. In Coolify → Environment Variables, set all the values marked (REQUIRED)
+#  4. Add a Coolify-managed PostgreSQL database resource, copy its
+#     internal connection string into ConnectionStrings__PostgreSQL
+#  5. Deploy — Coolify handles SSL, domain routing, and restarts
+#
+# RECOMMENDED: Use Coolify's built-in PostgreSQL resource instead of
+# defining a db service here. That gives you automatic backups,
+# point-in-time recovery, and a visual query interface.
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  app:
+    image: "${APP_IMAGE:-ghcr.io/yourusername/insurance-hub:latest}"
+    # If building from source instead of a registry image, use:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT:        Production
+      DOTNET_RUNNING_IN_CONTAINER:   "true"
+
+      # ── Database (REQUIRED) ──────────────────────────────────────────────
+      # Format: Host=<coolify-db-host>;Port=5432;Database=InsuranceHub;Username=postgres;Password=<secret>
+      # Get this from your Coolify PostgreSQL resource → Connection Details
+      DatabaseProvider:              PostgreSQL
+      ConnectionStrings__PostgreSQL: "${DATABASE_URL}"   # REQUIRED
+
+      # ── Email / SMTP (set all or leave SmtpHost blank to disable) ────────
+      EmailSettings__SmtpHost:       "${SMTP_HOST:-}"
+      EmailSettings__SmtpPort:       "${SMTP_PORT:-587}"
+      EmailSettings__UseSsl:         "${SMTP_USE_SSL:-true}"
+      EmailSettings__SenderEmail:    "${SMTP_SENDER_EMAIL:-noreply@insurancehub.com}"
+      EmailSettings__SenderName:     "${SMTP_SENDER_NAME:-InsuranceHub}"
+      EmailSettings__SenderPassword: "${SMTP_PASSWORD:-}"
+      EmailSettings__AgentEmail:     "${AGENT_EMAIL:-agent@insurancehub.com}"  # REQUIRED for quote notifications
+
+      # ── App ───────────────────────────────────────────────────────────────
+      ASPNETCORE_URLS:               "http://+:8080"
+
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+    labels:
+      # Coolify uses these for reverse-proxy routing (Traefik)
+      - "coolify.managed=true"

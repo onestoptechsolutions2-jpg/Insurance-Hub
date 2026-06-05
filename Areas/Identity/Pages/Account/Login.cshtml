@@ -1,0 +1,57 @@
+@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<h2>Welcome back</h2>
+<p class="auth-subtitle">Sign in to your InsuranceHub account</p>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="auth-alert" role="alert">@Model.ErrorMessage</div>
+}
+
+<div asp-validation-summary="ModelOnly" class="auth-alert" role="alert"></div>
+
+<form id="account" method="post">
+
+    <div class="auth-field">
+        <label asp-for="Input.Email">Email address</label>
+        <input asp-for="Input.Email"
+               type="email"
+               autocomplete="username"
+               placeholder="you@example.com"
+               aria-required="true" />
+        <span asp-validation-for="Input.Email" class="text-danger"></span>
+    </div>
+
+    <div class="auth-field">
+        <label asp-for="Input.Password">Password</label>
+        <input asp-for="Input.Password"
+               type="password"
+               autocomplete="current-password"
+               placeholder="••••••••"
+               aria-required="true" />
+        <span asp-validation-for="Input.Password" class="text-danger"></span>
+    </div>
+
+    <div class="auth-check">
+        <input asp-for="Input.RememberMe" type="checkbox" />
+        <label asp-for="Input.RememberMe">Keep me signed in</label>
+    </div>
+
+    <button id="login-submit" type="submit" class="auth-btn">Sign in</button>
+
+    <div class="auth-links">
+        <span>Don't have an account? <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create one</a></span>
+        <a asp-page="./ForgotPassword">Forgot your password?</a>
+    </div>
+
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Insurance Hub</title>
+
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/auth.css" />
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="header-container">
+
+            <div class="logo">
+                InsuranceHub
+            </div>
+
+            <nav class="nav-links">
+                <a href="/">All Plans</a>
+                <a href="/?type=Life">Life</a>
+                <a href="/?type=Health">Health</a>
+                <a href="/?type=Motor">Motor</a>
+                <a href="/?type=Home">Home</a>
+                <a href="/?type=Travel">Travel</a>
+                <a href="/?type=Business">Business</a>
+            </nav>
+
+            <partial name="_LoginPartial" />
+
+        </div>
+    </header>
+
+    <main class="main-container">
+        @RenderBody()
+    </main>
+
+    <script src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Normalise line endings to LF on commit, CRLF on Windows checkout
+* text=auto eol=crlf
+
+# Force LF for files used in Docker / Linux builds
+Dockerfile          text eol=lf
+*.sh                text eol=lf
+.dockerignore       text eol=lf
+docker-compose*.yml text eol=lf
+.env*               text eol=lf
+
+# Binary files — no conversion
+*.png  binary
+*.ico  binary
+*.jpg  binary
+*.gif  binary
+*.woff binary
+*.woff2 binary

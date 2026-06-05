@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-Insurance_Hub-0dec0a6a-b89f-406f-987b-e9631ea67223</UserSecretsId>
+    <RootNamespace>Insurance_Hub</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.27" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.27" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.27" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
+    <!-- Active provider -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <!-- SQL Server — kept for future use; swap provider in appsettings.json to activate -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.27" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.27" />
+  </ItemGroup>
+
+</Project>

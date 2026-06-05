@@ -1,0 +1,63 @@
+version: "3.9"
+
+# ── Local development / smoke-test stack ─────────────────────────────────────
+# Usage:
+#   docker compose up --build
+#   App  → http://localhost:8080
+#   DB   → localhost:5432 (postgres/postgres)
+#
+# Stop & remove volumes:
+#   docker compose down -v
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       InsuranceHub
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"   # expose for local tools (TablePlus, pgAdmin, etc.)
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT:          Production
+      DOTNET_RUNNING_IN_CONTAINER:     "true"
+      DatabaseProvider:                PostgreSQL
+      ConnectionStrings__PostgreSQL:   "Host=db;Port=5432;Database=InsuranceHub;Username=postgres;Password=postgres"
+
+      # ── Email (fill in or leave blank to disable) ──
+      EmailSettings__SmtpHost:         ""
+      EmailSettings__SmtpPort:         "587"
+      EmailSettings__UseSsl:           "true"
+      EmailSettings__SenderEmail:      "noreply@insurancehub.com"
+      EmailSettings__SenderName:       "InsuranceHub"
+      EmailSettings__SenderPassword:   ""
+      EmailSettings__AgentEmail:       "agent@insurancehub.com"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+volumes:
+  pgdata:

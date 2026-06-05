@@ -1,0 +1,171 @@
+@model Insurance_Hub.Models.InsurancePlan
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+
+@{
+    ViewData["Title"] = Model.PlanName;
+    var coverageText = Model.CoverageLimit > 0
+        ? $"KES {Model.CoverageLimit:N0}"
+        : "Unlimited / Contact Provider";
+    var stars = (int)Math.Round(Model.Rating);
+}
+
+<div class="detail-back">
+    <a href="/?type=@Model.Type" class="back-link">
+        ← Back to @Model.Type Plans
+    </a>
+</div>
+
+<div class="detail-layout">
+
+    @* ── Left: Plan info ────────────────────────────────────────────── *@
+    <div class="detail-main">
+
+        <div class="plan-badge detail-badge">@Model.Type</div>
+
+        @if (Model.IsPopular)
+        {
+            <span class="popular-tag">⭐ Popular Choice</span>
+        }
+
+        <h1 class="detail-title">@Model.PlanName</h1>
+
+        <div class="detail-provider-row">
+            <span class="detail-provider-name">@Model.Provider?.Name</span>
+            <span class="detail-provider-country">@Model.Provider?.Country</span>
+            <div class="star-row">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <span class="star @(i <= stars ? "star-filled" : "star-empty")">★</span>
+                }
+                <span class="rating-num">@Model.Rating.ToString("0.0")</span>
+            </div>
+        </div>
+
+        <p class="detail-description">@Model.Description</p>
+
+        <div class="detail-stats">
+            <div class="stat-card">
+                <div class="stat-label">Monthly Premium</div>
+                <div class="stat-value">KES @Model.MonthlyPremium.ToString("N2")</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Coverage Limit</div>
+                <div class="stat-value">@coverageText</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Deductible</div>
+                <div class="stat-value">@(Model.Deductible > 0 ? $"KES {Model.Deductible:N0}" : "None")</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Plan Tier</div>
+                <div class="stat-value">@Model.Tier</div>
+            </div>
+        </div>
+
+        <div class="detail-features-section">
+            <h3>What's Covered</h3>
+            <ul class="features-list">
+                @foreach (var feature in Model.FeatureList)
+                {
+                    <li class="feature-item">
+                        <span class="feature-check">✓</span>
+                        @feature
+                    </li>
+                }
+            </ul>
+        </div>
+
+    </div>
+
+    @* ── Right: Provider + CTA ───────────────────────────────────────── *@
+    <div class="detail-sidebar">
+
+        <div class="sidebar-card">
+            <div class="sidebar-price">KES @Model.MonthlyPremium.ToString("N2")<span>/mo</span></div>
+            <div class="sidebar-tier">@Model.Tier Plan</div>
+
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <button class="btn-primary full quote-btn"
+                        data-plan-id="@Model.Id"
+                        data-plan="@Model.PlanName"
+                        data-provider="@Model.Provider?.Name"
+                        data-premium="@Model.MonthlyPremium"
+                        data-type="@Model.Type"
+                        data-tier="@Model.Tier"
+                        data-coverage="@Model.CoverageLimit"
+                        data-features="@Model.Features">
+                    Get Quote
+                </button>
+            }
+            else
+            {
+                <a href="/Identity/Account/Login?returnUrl=@Url.Action("Details", new { id = Model.Id })"
+                   class="btn-primary full btn-outline" style="display:block;text-align:center;">
+                    Sign in to Get Quote
+                </a>
+            }
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-provider">
+                <div class="sidebar-section-label">Provider</div>
+                <div class="sidebar-provider-name">@Model.Provider?.Name</div>
+                <div class="sidebar-provider-desc">@Model.Provider?.Description</div>
+                @if (!string.IsNullOrEmpty(Model.Provider?.Website))
+                {
+                    <a href="@Model.Provider.Website" target="_blank" class="provider-site-link">
+                        Visit Provider Website ↗
+                    </a>
+                }
+                @if (!string.IsNullOrEmpty(Model.Provider?.ContactEmail))
+                {
+                    <a href="mailto:@Model.Provider.ContactEmail" class="provider-email-link">
+                        @Model.Provider.ContactEmail
+                    </a>
+                }
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@* ── Quote modal (same as index) ────────────────────────────────────────── *@
+<div id="quoteModal" class="modal">
+    <div class="modal-content">
+
+        <span id="closeForm" class="close">&times;</span>
+
+        <div class="modal-plan-badge" id="modalBadge"></div>
+        <h2>Request a Quote</h2>
+        <p class="modal-plan-name" id="selectedPlan"></p>
+        <p class="modal-provider" id="modalProvider"></p>
+        <p class="modal-price" id="modalPrice"></p>
+
+        <form id="quoteForm" asp-action="RequestQuote" asp-controller="Home" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="planId"         id="hiddenPlanId" />
+            <input type="hidden" name="planName"       id="hiddenPlanName" />
+            <input type="hidden" name="planTier"       id="hiddenTier" />
+            <input type="hidden" name="providerName"   id="hiddenProvider" />
+            <input type="hidden" name="monthlyPremium" id="hiddenPremium" />
+            <input type="hidden" name="coverageLimit"  id="hiddenCoverage" />
+            <input type="hidden" name="insuranceType"  id="hiddenType" />
+            <input type="hidden" name="features"       id="hiddenFeatures" />
+
+            <div class="modal-field">
+                <label for="fullName">Full Name</label>
+                <input type="text"  id="fullName" name="fullName" placeholder="Jane Smith" required />
+            </div>
+            <div class="modal-field">
+                <label for="emailInput">Email Address</label>
+                <input type="email" id="emailInput" name="email" placeholder="jane@example.com" required />
+            </div>
+            <button type="submit" class="btn-primary full">Submit Request</button>
+        </form>
+
+    </div>
+</div>
+
