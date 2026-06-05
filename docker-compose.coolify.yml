@@ -1,53 +1,39 @@
 version: "3.9"
 
-# ── Coolify Deployment ────────────────────────────────────────────────────────
-# Required env vars → set in Coolify Environment Variables tab:
+# ── Coolify Deployment — App only, uses Coolify-managed PostgreSQL ────────────
 #
-#   DB_PASSWORD        strong password for PostgreSQL        (REQUIRED)
-#   AGENT_EMAIL        inbox that receives quote alerts      (REQUIRED)
-#   APP_PORT           host port to expose the app on        (default: 8080)
-#   SMTP_HOST          e.g. smtp.gmail.com                   (optional)
-#   SMTP_SENDER_EMAIL  e.g. noreply@yourdomain.com           (optional)
-#   SMTP_PASSWORD      SMTP / app password                   (optional)
+# SETUP:
+#  1. In Coolify → Databases → New Database → PostgreSQL 16
+#  2. Copy the Internal Connection URL from the database resource
+#  3. Set it as DATABASE_URL in this app's Environment Variables
+#
+# Required env vars → Coolify Environment Variables tab:
+#
+#   DATABASE_URL       Internal connection URL from Coolify PostgreSQL  (REQUIRED)
+#   AGENT_EMAIL        inbox that receives quote alerts                 (REQUIRED)
+#   APP_PORT           host port (default 3000 — change if taken)       (optional)
+#   SMTP_HOST          e.g. smtp.gmail.com                              (optional)
+#   SMTP_SENDER_EMAIL  e.g. noreply@yourdomain.com                     (optional)
+#   SMTP_PASSWORD      SMTP / app password                              (optional)
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
-
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB:       InsuranceHub
-      POSTGRES_USER:     insurancehub
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U insurancehub -d InsuranceHub"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-
-    # ── Port mapping ───────────────────────────────────────────────────────
-    # APP_PORT = the host port Coolify/Traefik routes to
-    # Default 8080 — change via APP_PORT env var if that port is already taken
     ports:
-      - "${APP_PORT:-8080}:8080"
-
+      - "${APP_PORT:-5055}:8080"
     environment:
       ASPNETCORE_ENVIRONMENT:        Production
       DOTNET_RUNNING_IN_CONTAINER:   "true"
       ASPNETCORE_URLS:               "http://+:8080"
 
       DatabaseProvider:              PostgreSQL
-      ConnectionStrings__PostgreSQL: "Host=db;Port=5432;Database=InsuranceHub;Username=insurancehub;Password=${DB_PASSWORD}"
+      # Paste the Coolify internal DB URL here via env var:
+      ConnectionStrings__PostgreSQL: "${DATABASE_URL}"
 
       EmailSettings__SmtpHost:       ${SMTP_HOST:-}
       EmailSettings__SmtpPort:       ${SMTP_PORT:-587}
@@ -57,17 +43,9 @@ services:
       EmailSettings__SenderPassword: ${SMTP_PASSWORD:-}
       EmailSettings__AgentEmail:     ${AGENT_EMAIL:-}
 
-    depends_on:
-      db:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       start_period: 60s
       retries: 3
-
-volumes:
-  pgdata:
-    external: true
-    name: insurancehub_pgdata
