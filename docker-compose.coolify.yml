@@ -69,4 +69,5 @@ services:
 
 volumes:
   pgdata:
+    external: true
     name: insurancehub_pgdata
