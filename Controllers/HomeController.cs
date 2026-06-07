@@ -24,8 +24,8 @@ namespace Insurance_Hub.Controllers
             _email       = email;
         }
 
-        // GET /  or  /?type=Motor
-        public async Task<IActionResult> Index(string? type)
+        // GET /  or  /?type=Motor&provider=Britam
+        public async Task<IActionResult> Index(string? type, string? provider)
         {
             var query = _db.InsurancePlans
                 .Include(p => p.Provider)
@@ -37,13 +37,23 @@ namespace Insurance_Hub.Controllers
                 query = query.Where(p => p.Type == parsed);
             }
 
+            if (!string.IsNullOrWhiteSpace(provider))
+            {
+                query = query.Where(p => p.Provider!.Name == provider);
+            }
+
             var plans = await query
                 .OrderByDescending(p => p.IsPopular)
                 .ThenBy(p => p.Type)
                 .ThenBy(p => p.MonthlyPremium)
                 .ToListAsync();
 
-            ViewBag.ActiveType = type ?? "All";
+            ViewBag.ActiveType     = type ?? "All";
+            ViewBag.ActiveProvider = provider ?? "All";
+            ViewBag.Providers      = await _db.Providers
+                                              .OrderBy(p => p.Name)
+                                              .Select(p => p.Name)
+                                              .ToListAsync();
             return View(plans);
         }
 

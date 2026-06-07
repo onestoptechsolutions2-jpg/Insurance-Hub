@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (modalBadge)    modalBadge.textContent    = btn.dataset.type ?? "";
             if (modalProvider) modalProvider.textContent = btn.dataset.provider ?? "";
             if (modalPrice)    modalPrice.textContent    = btn.dataset.premium
-                ? `$${parseFloat(btn.dataset.premium).toFixed(2)}/mo`
+                ? `KES ${parseFloat(btn.dataset.premium).toLocaleString()}/mo`
                 : "";
 
             openModal();
@@ -63,9 +63,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const q = searchBox.value.toLowerCase().trim();
 
         document.querySelectorAll(".insurance-plan").forEach(card => {
-            const name = card.querySelector(".plan-name")?.textContent.toLowerCase() ?? "";
-            const type = card.dataset.type?.toLowerCase() ?? "";
-            card.style.display = (!q || name.includes(q) || type.includes(q)) ? "" : "none";
+            const name     = card.querySelector(".plan-name")?.textContent.toLowerCase() ?? "";
+            const type     = card.dataset.type?.toLowerCase() ?? "";
+            const provider = card.querySelector(".plan-provider")?.textContent.toLowerCase() ?? "";
+            card.style.display = (!q || name.includes(q) || type.includes(q) || provider.includes(q)) ? "" : "none";
         });
     });
 

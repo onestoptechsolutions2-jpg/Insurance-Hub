@@ -4,7 +4,9 @@
 @inject SignInManager<ApplicationUser> SignInManager
 
 @{
-    var activeType = ViewBag.ActiveType as string ?? "All";
+    var activeType     = ViewBag.ActiveType as string ?? "All";
+    var activeProvider = ViewBag.ActiveProvider as string ?? "All";
+    var providers      = ViewBag.Providers as List<string> ?? new List<string>();
     var types = new[] { "All", "Life", "Health", "Motor", "Home", "Travel", "Business", "Agriculture", "Micro" };
 }
 
@@ -39,13 +41,35 @@
     </div>
 </section>
 
-@* ── Filter tabs ─────────────────────────────────────────────────────────── *@
+@* ── Type filter tabs ─────────────────────────────────────────────────────── *@
 <div class="filter-tabs">
     @foreach (var t in types)
     {
         var active = t == activeType ? "filter-tab active" : "filter-tab";
-        var href   = t == "All" ? Url.Action("Index", "Home") : Url.Action("Index", "Home", new { type = t });
+        var href   = t == "All"
+            ? Url.Action("Index", "Home", new { provider = activeProvider == "All" ? null : activeProvider })
+            : Url.Action("Index", "Home", new { type = t, provider = activeProvider == "All" ? null : activeProvider });
         <a href="@href" class="@active">@t</a>
+    }
+</div>
+
+@* ── Provider filter ──────────────────────────────────────────────────────── *@
+<div class="provider-filter">
+    <span class="provider-filter-label">Provider:</span>
+    @{
+        var allProviderActive = activeProvider == "All" ? "provider-chip active" : "provider-chip";
+        var allProviderHref   = activeType == "All"
+            ? Url.Action("Index", "Home")
+            : Url.Action("Index", "Home", new { type = activeType });
+    }
+    <a href="@allProviderHref" class="@allProviderActive">All</a>
+    @foreach (var p in providers)
+    {
+        var chipClass = p == activeProvider ? "provider-chip active" : "provider-chip";
+        var chipHref  = activeType == "All"
+            ? Url.Action("Index", "Home", new { provider = p })
+            : Url.Action("Index", "Home", new { type = activeType, provider = p });
+        <a href="@chipHref" class="@chipClass">@p</a>
     }
 </div>
 
