@@ -17,6 +17,10 @@ WORKDIR /app
 # Security: run as non-root
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 
+# Install wget for health check (smaller than curl)
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends wget && rm -rf /var/lib/apt/lists/*
+
 # Copy published output
 COPY --from=build /app/publish .
 
@@ -30,8 +34,8 @@ EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
-# Health check — Coolify polls this to know the container is ready
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+# Health check using wget (available in aspnet base image)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget -qO- http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "Insurance Hub.dll"]
