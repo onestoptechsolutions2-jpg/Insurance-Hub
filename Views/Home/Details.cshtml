@@ -1,149 +1,198 @@
 @model Insurance_Hub.Models.InsurancePlan
+@using Insurance_Hub.Models
 @using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
+@inject SignInManager<ApplicationUser> SignInManager
 
 @{
     ViewData["Title"] = Model.PlanName;
+    var stars        = (int)Math.Round(Model.Rating);
     var coverageText = Model.CoverageLimit > 0
         ? $"KES {Model.CoverageLimit:N0}"
-        : "Unlimited / Contact Provider";
-    var stars = (int)Math.Round(Model.Rating);
+        : "Unlimited";
+
+    // Type accent colour (mirrors Index.cshtml palette)
+    var accentMap = new Dictionary<string, string>
+    {
+        ["Life"]        = "#e11d48",
+        ["Health"]      = "#059669",
+        ["Motor"]       = "#2563eb",
+        ["Home"]        = "#ea580c",
+        ["Travel"]      = "#7c3aed",
+        ["Business"]    = "#0891b2",
+        ["Agriculture"] = "#16a34a",
+        ["Micro"]       = "#0d9488",
+    };
+    var accent = accentMap.TryGetValue(Model.Type.ToString(), out var c) ? c : "#f59e0b";
 }
 
-<div class="detail-back">
+<div class="main-container">
+
     <a href="/?type=@Model.Type" class="back-link">
-        ← Back to @Model.Type Plans
+        ← Back to @Model.Type plans
     </a>
-</div>
 
-<div class="detail-layout">
+    <div class="detail-layout">
 
-    @* ── Left: Plan info ────────────────────────────────────────────── *@
-    <div class="detail-main">
+        @* ══ LEFT: plan info ══════════════════════════════════════════════════ *@
+        <div class="detail-main">
 
-        <div class="plan-badge detail-badge">@Model.Type</div>
-
-        @if (Model.IsPopular)
-        {
-            <span class="popular-tag">⭐ Popular Choice</span>
-        }
-
-        <h1 class="detail-title">@Model.PlanName</h1>
-
-        <div class="detail-provider-row">
-            <span class="detail-provider-name">@Model.Provider?.Name</span>
-            <span class="detail-provider-country">@Model.Provider?.Country</span>
-            <div class="star-row">
-                @for (int i = 1; i <= 5; i++)
+            @* badges *@
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+                <span class="plan-badge"
+                      style="color:@accent;background:@(accent)18;border:1px solid @(accent)30">
+                    @Model.Type
+                </span>
+                @if (Model.IsPopular)
                 {
-                    <span class="star @(i <= stars ? "star-filled" : "star-empty")">★</span>
+                    <span class="popular-tag">⭐ Popular Choice</span>
                 }
-                <span class="rating-num">@Model.Rating.ToString("0.0")</span>
             </div>
-        </div>
 
-        <p class="detail-description">@Model.Description</p>
+            <h1 class="detail-title">@Model.PlanName</h1>
 
-        <div class="detail-stats">
-            <div class="stat-card">
-                <div class="stat-label">Monthly Premium</div>
-                <div class="stat-value">KES @Model.MonthlyPremium.ToString("N2")</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Coverage Limit</div>
-                <div class="stat-value">@coverageText</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Deductible</div>
-                <div class="stat-value">@(Model.Deductible > 0 ? $"KES {Model.Deductible:N0}" : "None")</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Plan Tier</div>
-                <div class="stat-value">@Model.Tier</div>
-            </div>
-        </div>
-
-        <div class="detail-features-section">
-            <h3>What's Covered</h3>
-            <ul class="features-list">
-                @foreach (var feature in Model.FeatureList)
+            @* provider row + stars *@
+            <div class="detail-provider-row">
+                <span class="detail-provider-name">@Model.Provider?.Name</span>
+                @if (!string.IsNullOrEmpty(Model.Provider?.Country))
                 {
-                    <li class="feature-item">
-                        <span class="feature-check">✓</span>
-                        @feature
-                    </li>
+                    <span class="detail-provider-country">@Model.Provider.Country</span>
                 }
-            </ul>
+                <div class="star-row">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <span class="@(i <= stars ? "star-filled" : "star-empty")">★</span>
+                    }
+                    <span class="rating-num">@Model.Rating.ToString("0.0")</span>
+                </div>
+            </div>
+
+            <p class="detail-description">@Model.Description</p>
+
+            @* stat cards *@
+            <div class="detail-stats">
+                <div class="stat-card" style="border-top:3px solid @accent">
+                    <div class="stat-label">Monthly Premium</div>
+                    <div class="stat-value" style="color:@accent">
+                        KES @Model.MonthlyPremium.ToString("N0")
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Coverage Limit</div>
+                    <div class="stat-value">@coverageText</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Deductible</div>
+                    <div class="stat-value">
+                        @(Model.Deductible > 0 ? $"KES {Model.Deductible:N0}" : "None")
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Plan Tier</div>
+                    <div class="stat-value">@Model.Tier</div>
+                </div>
+            </div>
+
+            @* features *@
+            <div class="detail-features-section">
+                <h3>What's Covered</h3>
+                <ul class="features-list">
+                    @foreach (var feature in Model.FeatureList)
+                    {
+                        <li class="feature-item">
+                            <span class="feature-check" style="color:@accent">✓</span>
+                            @feature
+                        </li>
+                    }
+                </ul>
+            </div>
+
         </div>
 
-    </div>
+        @* ══ RIGHT: sidebar ════════════════════════════════════════════════════ *@
+        <div class="detail-sidebar">
+            <div class="sidebar-card" style="--card-accent:@accent">
 
-    @* ── Right: Provider + CTA ───────────────────────────────────────── *@
-    <div class="detail-sidebar">
+                @* accent bar *@
+                <div style="height:5px;margin:-34px -34px 24px;border-radius:var(--r-xl) var(--r-xl) 0 0;
+                            background:linear-gradient(90deg,@accent,@(accent)88)"></div>
 
-        <div class="sidebar-card">
-            <div class="sidebar-price">KES @Model.MonthlyPremium.ToString("N2")<span>/mo</span></div>
-            <div class="sidebar-tier">@Model.Tier Plan</div>
+                <div class="sidebar-price">
+                    <span style="font-size:14px;font-weight:500;color:var(--muted)">KES </span>@Model.MonthlyPremium.ToString("N0")<span>/mo</span>
+                </div>
+                <div class="sidebar-tier">@Model.Tier tier · @Model.Type insurance</div>
 
-            @if (SignInManager.IsSignedIn(User))
-            {
-                <button class="btn-primary full quote-btn"
-                        data-plan-id="@Model.Id"
-                        data-plan="@Model.PlanName"
-                        data-provider="@Model.Provider?.Name"
-                        data-premium="@Model.MonthlyPremium"
-                        data-type="@Model.Type"
-                        data-tier="@Model.Tier"
-                        data-coverage="@Model.CoverageLimit"
-                        data-features="@Model.Features">
-                    Get Quote
-                </button>
-            }
-            else
-            {
-                <a href="/Identity/Account/Login?returnUrl=@Url.Action("Details", new { id = Model.Id })"
-                   class="btn-primary full btn-outline" style="display:block;text-align:center;">
-                    Sign in to Get Quote
-                </a>
-            }
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <button class="btn-primary full quote-btn"
+                            style="background:linear-gradient(135deg,@accent,@(accent)cc);
+                                   box-shadow:0 4px 16px @(accent)44"
+                            data-plan-id="@Model.Id"
+                            data-plan="@Model.PlanName"
+                            data-provider="@Model.Provider?.Name"
+                            data-premium="@Model.MonthlyPremium"
+                            data-type="@Model.Type"
+                            data-tier="@Model.Tier"
+                            data-coverage="@Model.CoverageLimit"
+                            data-features="@Model.Features">
+                        Get Quote →
+                    </button>
+                }
+                else
+                {
+                    <a href="/Identity/Account/Login?returnUrl=@Url.Action("Details","Home", new { id = Model.Id })"
+                       class="btn-primary full"
+                       style="display:flex;justify-content:center;
+                              background:linear-gradient(135deg,@accent,@(accent)cc)">
+                        Sign in to Get Quote →
+                    </a>
+                }
 
-            <div class="sidebar-divider"></div>
+                <div class="sidebar-divider"></div>
 
-            <div class="sidebar-provider">
                 <div class="sidebar-section-label">Provider</div>
                 <div class="sidebar-provider-name">@Model.Provider?.Name</div>
-                <div class="sidebar-provider-desc">@Model.Provider?.Description</div>
+
+                @if (!string.IsNullOrEmpty(Model.Provider?.Description))
+                {
+                    <p class="sidebar-provider-desc">@Model.Provider.Description</p>
+                }
                 @if (!string.IsNullOrEmpty(Model.Provider?.Website))
                 {
-                    <a href="@Model.Provider.Website" target="_blank" class="provider-site-link">
-                        Visit Provider Website ↗
-                    </a>
+                    <a href="@Model.Provider.Website" target="_blank" rel="noopener"
+                       class="provider-site-link">↗ Provider website</a>
                 }
                 @if (!string.IsNullOrEmpty(Model.Provider?.ContactEmail))
                 {
-                    <a href="mailto:@Model.Provider.ContactEmail" class="provider-email-link">
-                        @Model.Provider.ContactEmail
-                    </a>
+                    <a href="mailto:@Model.Provider.ContactEmail"
+                       class="provider-email-link">✉ @Model.Provider.ContactEmail</a>
                 }
+
+                <div class="sidebar-divider"></div>
+
+                @* compare nudge *@
+                <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">
+                    Not sure? Compare plans side-by-side.
+                </p>
+                <a href="/?type=@Model.Type" class="btn-secondary full"
+                   style="text-align:center;display:block">
+                    Browse similar plans
+                </a>
+
             </div>
         </div>
 
     </div>
-
 </div>
 
-@* ── Quote modal (same as index) ────────────────────────────────────────── *@
+@* ── Quote modal ───────────────────────────────────────────────────────────── *@
 <div id="quoteModal" class="modal">
     <div class="modal-content">
-
         <span id="closeForm" class="close">&times;</span>
-
         <div class="modal-plan-badge" id="modalBadge"></div>
-        <h2>Request a Quote</h2>
+        <h2 style="font-size:20px;font-weight:800;margin:8px 0 4px;color:var(--ink)">Get a Quote</h2>
         <p class="modal-plan-name" id="selectedPlan"></p>
-        <p class="modal-provider" id="modalProvider"></p>
-        <p class="modal-price" id="modalPrice"></p>
-
+        <p class="modal-provider"  id="modalProvider"></p>
+        <p class="modal-price"     id="modalPrice"></p>
         <form id="quoteForm" asp-action="RequestQuote" asp-controller="Home" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="planId"         id="hiddenPlanId" />
@@ -154,18 +203,17 @@
             <input type="hidden" name="coverageLimit"  id="hiddenCoverage" />
             <input type="hidden" name="insuranceType"  id="hiddenType" />
             <input type="hidden" name="features"       id="hiddenFeatures" />
-
             <div class="modal-field">
                 <label for="fullName">Full Name</label>
-                <input type="text"  id="fullName" name="fullName" placeholder="Jane Smith" required />
+                <input type="text"  id="fullName"   name="fullName" placeholder="Jane Wanjiku" required />
             </div>
             <div class="modal-field">
                 <label for="emailInput">Email Address</label>
-                <input type="email" id="emailInput" name="email" placeholder="jane@example.com" required />
+                <input type="email" id="emailInput" name="email"    placeholder="jane@example.com" required />
             </div>
-            <button type="submit" class="btn-primary full">Submit Request</button>
+            <button type="submit" class="btn-primary full" style="margin-top:8px;">
+                Send Quote Request →
+            </button>
         </form>
-
     </div>
 </div>
-
