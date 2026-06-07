@@ -10,185 +10,192 @@
 
     var aisles = new[]
     {
-        new { Name = "All",         Icon = "🏪", Label = "All Plans"   },
-        new { Name = "Life",        Icon = "🫀", Label = "Life"        },
-        new { Name = "Health",      Icon = "🏥", Label = "Health"      },
-        new { Name = "Motor",       Icon = "🚗", Label = "Motor"       },
-        new { Name = "Home",        Icon = "🏠", Label = "Home"        },
-        new { Name = "Travel",      Icon = "✈️", Label = "Travel"      },
-        new { Name = "Business",    Icon = "🏢", Label = "Business"    },
-        new { Name = "Agriculture", Icon = "🌾", Label = "Agriculture" },
-        new { Name = "Micro",       Icon = "📱", Label = "Micro"       },
+        new { Name = "All",         Icon = "⊞",  Label = "All Plans"   },
+        new { Name = "Life",        Icon = "♡",  Label = "Life"        },
+        new { Name = "Health",      Icon = "✚",  Label = "Health"      },
+        new { Name = "Motor",       Icon = "◎",  Label = "Motor"       },
+        new { Name = "Home",        Icon = "⌂",  Label = "Home"        },
+        new { Name = "Travel",      Icon = "✦",  Label = "Travel"      },
+        new { Name = "Business",    Icon = "◈",  Label = "Business"    },
+        new { Name = "Agriculture", Icon = "❋",  Label = "Agriculture" },
+        new { Name = "Micro",       Icon = "◉",  Label = "Micro"       },
     };
 }
 
-@* ── Toast ─────────────────────────────────────────────────────────────── *@
+@* ── Toasts ──────────────────────────────────────────────────────────────── *@
 @if (TempData["QuoteSuccess"] is string ok)
 {
-    <div class="toast toast-success" id="toast">
+    <div class="s-toast s-toast-success" id="toast">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         <span>@ok</span>
-        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+        <button class="s-toast-close" onclick="this.parentElement.remove()">×</button>
     </div>
 }
 @if (TempData["QuoteError"] is string err)
 {
-    <div class="toast toast-error" id="toast-err">
+    <div class="s-toast s-toast-error" id="toast-err">
         <span>@err</span>
-        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+        <button class="s-toast-close" onclick="this.parentElement.remove()">×</button>
     </div>
 }
 
-@* ── Search bar ─────────────────────────────────────────────────────────── *@
-<div class="sm-search-wrap">
-    <div class="sm-search-icon">🔍</div>
-    <input id="searchBox" class="sm-search" type="text"
-           placeholder="Search plans, providers or cover type…" autocomplete="off" />
-    @if (activeType != "All" || activeProvider != "All")
-    {
-        <a href="/" class="sm-search-clear" title="Clear filters">×</a>
-    }
-</div>
+@* ── Hero ────────────────────────────────────────────────────────────────── *@
+<section class="stripe-hero" id="heroSection">
 
-@* ── Aisles ─────────────────────────────────────────────────────────────── *@
-<div class="sm-aisles">
-    @foreach (var a in aisles)
-    {
-        var href   = a.Name == "All" ? Url.Action("Index","Home") : Url.Action("Index","Home", new { type = a.Name });
-        var active = a.Name == activeType;
-        <a href="@href" class="sm-aisle @(active ? "sm-aisle-active" : "")">
-            <span class="sm-aisle-icon">@a.Icon</span>
-            <span class="sm-aisle-label">@a.Label</span>
-        </a>
-    }
-</div>
+    @* cockpit blobs (JS-driven parallax) *@
+    <div class="hero-blob hero-blob-1" id="heroBlob1"></div>
+    <div class="hero-blob hero-blob-2" id="heroBlob2"></div>
+    <div class="hero-blob hero-blob-3" id="heroBlob3"></div>
 
-@* ── Provider strip ─────────────────────────────────────────────────────── *@
-@if (providers.Any())
-{
-    <div class="sm-provider-strip">
-        @{
-            var allHref = activeType == "All" ? Url.Action("Index","Home") : Url.Action("Index","Home", new { type = activeType });
-        }
-        <a href="@allHref" class="sm-provider-pill @(activeProvider == "All" ? "active" : "")">All providers</a>
-        @foreach (var p in providers)
+    @* grid overlay *@
+    <div class="hero-grid-overlay" id="heroGrid"></div>
+
+    <div class="stripe-hero-inner" id="heroInner">
+        <div class="stripe-hero-eyebrow">Kenya's Insurance Supermarket</div>
+        <h1 class="stripe-hero-h1">The right cover,<br/>at the right price.</h1>
+        <p class="stripe-hero-sub">Compare plans from Jubilee, AAR, Britam, Sanlam, Old Mutual, ICEA Lion, APA &amp; CIC — all in one place.</p>
+
+        <div class="stripe-search-wrap">
+            <svg class="stripe-search-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="searchBox" class="stripe-search" type="text"
+                   placeholder="Search plans, providers or cover type…" autocomplete="off" />
+            @if (activeType != "All" || activeProvider != "All")
+            {
+                <a href="/" class="stripe-search-clear">×</a>
+            }
+        </div>
+    </div>
+</section>
+
+@* ── Aisles ──────────────────────────────────────────────────────────────── *@
+<div class="stripe-page">
+
+    <div class="stripe-aisles">
+        @foreach (var a in aisles)
         {
-            var href = activeType == "All"
-                ? Url.Action("Index","Home", new { provider = p })
-                : Url.Action("Index","Home", new { type = activeType, provider = p });
-            <a href="@href" class="sm-provider-pill @(p == activeProvider ? "active" : "")">@p</a>
+            var href   = a.Name == "All" ? Url.Action("Index","Home") : Url.Action("Index","Home", new { type = a.Name });
+            var active = a.Name == activeType;
+            <a href="@href" class="stripe-aisle @(active ? "active" : "")">
+                <span class="stripe-aisle-icon">@a.Icon</span>
+                <span>@a.Label</span>
+            </a>
         }
     </div>
-}
 
-@* ── Results header ─────────────────────────────────────────────────────── *@
-<div class="sm-results-header">
-    <span class="sm-results-count" id="resultsCount">@Model.Count plan@(Model.Count != 1 ? "s" : "")</span>
-    @if (activeType != "All")
+    @* ── Provider strip ──────────────────────────────────────────────────── *@
+    @if (providers.Any())
     {
-        <span class="sm-results-label">in @activeType</span>
-    }
-    @if (activeProvider != "All")
-    {
-        <span class="sm-results-label">· @activeProvider</span>
-    }
-</div>
-
-@* ── Product shelf ──────────────────────────────────────────────────────── *@
-<div class="sm-shelf" id="shelf">
-    @if (!Model.Any())
-    {
-        <div class="sm-empty">
-            <div style="font-size:48px;margin-bottom:12px;">🔍</div>
-            <p>No plans found. <a href="/" class="profile-link">Browse all →</a></p>
+        <div class="stripe-providers">
+            @{
+                var allHref = activeType == "All" ? Url.Action("Index","Home") : Url.Action("Index","Home", new { type = activeType });
+            }
+            <a href="@allHref" class="stripe-pill @(activeProvider == "All" ? "active" : "")">All providers</a>
+            @foreach (var p in providers)
+            {
+                var href = activeType == "All"
+                    ? Url.Action("Index","Home", new { provider = p })
+                    : Url.Action("Index","Home", new { type = activeType, provider = p });
+                <a href="@href" class="stripe-pill @(p == activeProvider ? "active" : "")">@p</a>
+            }
         </div>
     }
 
-    @foreach (var plan in Model)
-    {
-        var stars       = (int)Math.Round(plan.Rating);
-        var topFeatures = plan.FeatureList.Take(4).ToList();
+    @* ── Results count ───────────────────────────────────────────────────── *@
+    <div class="stripe-results-row">
+        <p class="stripe-results-text" id="resultsCount">
+            <strong>@Model.Count</strong> plan@(Model.Count != 1 ? "s" : "")
+            @if (activeType != "All") { <span>in @activeType</span> }
+            @if (activeProvider != "All") { <span>· @activeProvider</span> }
+        </p>
+    </div>
 
-        <div class="sm-card insurance-plan" data-type="@plan.Type" data-provider="@plan.Provider?.Name">
+    @* ── Plan grid ───────────────────────────────────────────────────────── *@
+    <div class="stripe-grid" id="shelf">
 
-            @* Provider + Popular *@
-            <div class="sm-card-top">
-                <span class="sm-card-provider">@plan.Provider?.Name</span>
-                @if (plan.IsPopular) { <span class="sm-popular">🔥 Popular</span> }
+        @if (!Model.Any())
+        {
+            <div class="stripe-empty">
+                <p>No plans found. <a href="/" class="stripe-link">Browse all →</a></p>
             </div>
+        }
 
-            @* Plan name *@
-            <div class="sm-card-name">@plan.PlanName</div>
+        @foreach (var plan in Model)
+        {
+            var stars       = (int)Math.Round(plan.Rating);
+            var topFeatures = plan.FeatureList.Take(4).ToList();
 
-            @* Type badge *@
-            <div class="sm-card-type">@plan.Type · @plan.Tier</div>
+            <div class="stripe-card insurance-plan" data-type="@plan.Type" data-provider="@plan.Provider?.Name">
 
-            @* Stars *@
-            <div class="sm-stars">
-                @for (int i = 1; i <= 5; i++)
+                @if (plan.IsPopular)
                 {
-                    <span class="@(i <= stars ? "star-filled" : "star-empty")">★</span>
+                    <div class="stripe-card-ribbon">Most Popular</div>
                 }
-                <span class="sm-rating">@plan.Rating.ToString("0.0")</span>
+
+                <div class="stripe-card-head">
+                    <span class="stripe-card-provider">@plan.Provider?.Name</span>
+                    <span class="stripe-card-type">@plan.Type</span>
+                </div>
+
+                <h3 class="stripe-card-name">@plan.PlanName</h3>
+
+                <div class="stripe-stars">
+                    @for (int i = 1; i <= 5; i++)
+                    { <span class="@(i <= stars ? "s-star-on" : "s-star-off")">★</span> }
+                    <span class="s-rating">@plan.Rating.ToString("0.0")</span>
+                </div>
+
+                <div class="stripe-price-block">
+                    <span class="stripe-currency">KES</span>
+                    <span class="stripe-amount">@plan.MonthlyPremium.ToString("N0")</span>
+                    <span class="stripe-period">/mo</span>
+                </div>
+                <div class="stripe-coverage">
+                    @(plan.CoverageLimit > 0 ? $"Cover up to KES {plan.CoverageLimit:N0}" : "Unlimited cover")
+                </div>
+
+                <ul class="stripe-features">
+                    @foreach (var f in topFeatures)
+                    {
+                        <li>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            @f
+                        </li>
+                    }
+                </ul>
+
+                <div class="stripe-card-actions">
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <button class="stripe-btn-primary quote-btn"
+                                data-plan-id="@plan.Id"
+                                data-plan="@plan.PlanName"
+                                data-provider="@plan.Provider?.Name"
+                                data-premium="@plan.MonthlyPremium"
+                                data-type="@plan.Type"
+                                data-tier="@plan.Tier"
+                                data-coverage="@plan.CoverageLimit"
+                                data-features="@plan.Features">
+                            Get Quote →
+                        </button>
+                    }
+                    else
+                    {
+                        <a href="/Identity/Account/Login" class="stripe-btn-primary">Get Quote →</a>
+                    }
+                    <a href="@Url.Action("Details","Home", new { id = plan.Id })" class="stripe-btn-ghost">View details</a>
+                </div>
+
             </div>
-
-            @* Price — the hero *@
-            <div class="sm-price">
-                <span class="sm-price-currency">KES</span>
-                <span class="sm-price-amount">@plan.MonthlyPremium.ToString("N0")</span>
-                <span class="sm-price-period">/mo</span>
-            </div>
-
-            @if (plan.CoverageLimit > 0)
-            {
-                <div class="sm-coverage">Cover up to KES @plan.CoverageLimit.ToString("N0")</div>
-            }
-            else
-            {
-                <div class="sm-coverage">Unlimited cover</div>
-            }
-
-            @* Features *@
-            <ul class="sm-features">
-                @foreach (var f in topFeatures)
-                {
-                    <li>@f</li>
-                }
-            </ul>
-
-            @* Actions *@
-            <div class="sm-card-actions">
-                @if (SignInManager.IsSignedIn(User))
-                {
-                    <button class="sm-btn-quote quote-btn"
-                            data-plan-id="@plan.Id"
-                            data-plan="@plan.PlanName"
-                            data-provider="@plan.Provider?.Name"
-                            data-premium="@plan.MonthlyPremium"
-                            data-type="@plan.Type"
-                            data-tier="@plan.Tier"
-                            data-coverage="@plan.CoverageLimit"
-                            data-features="@plan.Features">
-                        Get Quote
-                    </button>
-                }
-                else
-                {
-                    <a href="/Identity/Account/Login" class="sm-btn-quote">Get Quote</a>
-                }
-                <a href="@Url.Action("Details","Home", new { id = plan.Id })" class="sm-btn-details">Details →</a>
-            </div>
-
-        </div>
-    }
+        }
+    </div>
 </div>
 
-@* ── Quote modal (unchanged logic) ──────────────────────────────────────── *@
+@* ── Quote modal ─────────────────────────────────────────────────────────── *@
 <div id="quoteModal" class="modal">
     <div class="modal-content">
         <span id="closeForm" class="close">&times;</span>
         <div class="modal-plan-badge" id="modalBadge"></div>
-        <h2 style="margin:8px 0 4px;">Get a Quote</h2>
+        <h2 style="margin:8px 0 4px;font-size:22px;">Get a Quote</h2>
         <p class="modal-plan-name" id="selectedPlan"></p>
         <p class="modal-provider" id="modalProvider"></p>
         <p class="modal-price" id="modalPrice"></p>
@@ -210,7 +217,7 @@
                 <label for="emailInput">Email Address</label>
                 <input type="email" id="emailInput" name="email" placeholder="jane@example.com" required />
             </div>
-            <button type="submit" class="btn-primary full" style="margin-top:4px;">Send Quote Request →</button>
+            <button type="submit" class="stripe-btn-primary full" style="margin-top:8px;">Send Quote Request →</button>
         </form>
     </div>
 </div>

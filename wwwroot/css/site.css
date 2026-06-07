@@ -64,25 +64,46 @@ a { color: inherit; }
     overflow: hidden;
 }
 
-/* decorative blobs */
-.stripe-hero::before,
-.stripe-hero::after {
-    content: '';
+/* ── Cockpit blobs (JS-driven parallax) ────────────────────────────────── */
+.hero-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: .35;
     pointer-events: none;
+    will-change: transform;
+    filter: blur(72px);
+    /* snap to pointer, no CSS transition — JS uses lerp */
 }
-.stripe-hero::before {
-    width: 500px; height: 500px;
-    background: #635bff;
-    top: -120px; right: -80px;
+.hero-blob-1 {
+    width: 560px; height: 560px;
+    background: radial-gradient(circle, #635bff 0%, transparent 70%);
+    opacity: .50;
+    top: -160px; right: -100px;
 }
-.stripe-hero::after {
-    width: 400px; height: 400px;
-    background: #00c2ff;
-    bottom: -120px; left: -60px;
+.hero-blob-2 {
+    width: 440px; height: 440px;
+    background: radial-gradient(circle, #00c2ff 0%, transparent 70%);
+    opacity: .38;
+    bottom: -130px; left: -80px;
+}
+.hero-blob-3 {
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+    opacity: .30;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ── Perspective grid overlay ──────────────────────────────────────────── */
+.hero-grid-overlay {
+    position: absolute;
+    inset: -20%;          /* oversized so transform never shows edges */
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+    will-change: transform;
+    transform-origin: center center;
 }
 
 @keyframes meshShift {
