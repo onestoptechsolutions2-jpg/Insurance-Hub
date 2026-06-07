@@ -40,10 +40,12 @@ services:
     ports:
       - "5055:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT:        Production
-      DOTNET_RUNNING_IN_CONTAINER:   "true"
-      ASPNETCORE_URLS:               "http://+:8080"
-      HTTP_PORTS:                    ""
+      ASPNETCORE_ENVIRONMENT:              Production
+      DOTNET_RUNNING_IN_CONTAINER:         "true"
+      ASPNETCORE_URLS:                     "http://+:8080"
+      HTTP_PORTS:                          ""
+      # Tell ASP.NET to trust X-Forwarded-* headers from Traefik/Coolify
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
 
       DatabaseProvider:              PostgreSQL
       ConnectionStrings__PostgreSQL: "Host=db;Port=5432;Database=InsuranceHub;Username=insurancehub;Password=${DB_PASSWORD}"

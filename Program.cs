@@ -58,13 +58,20 @@ builder.Services.AddHostedService<PolicyReminderService>();
 // ── Health checks ──────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks();
 
-// ── Forwarded headers (Coolify / Nginx / Traefik reverse proxy) ────────────
+// ── Forwarded headers (Coolify / Traefik reverse proxy) ───────────────────
+// XForwardedHost  → lets Url.Action / RedirectToAction use the public domain
+// XForwardedProto → lets the app know the public scheme is https
+// XForwardedFor   → preserves the real client IP
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    // Trust all proxies inside Docker network
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor   |
+        ForwardedHeaders.XForwardedProto |
+        ForwardedHeaders.XForwardedHost;   // <-- critical for correct URL generation
+    // Trust any proxy on the Docker internal network (172.x.x.x, 10.x.x.x)
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
+    options.ForwardLimit = null; // allow unlimited proxy hops inside the cluster
 });
 
 var app = builder.Build();
