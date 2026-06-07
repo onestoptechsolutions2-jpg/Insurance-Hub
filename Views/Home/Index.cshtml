@@ -8,18 +8,22 @@
     var activeProvider = ViewBag.ActiveProvider as string ?? "All";
     var providers      = ViewBag.Providers as List<string> ?? new List<string>();
 
-    var aisles = new[]
+    // type → [accent-hex, emoji, label]
+    var typeMap = new Dictionary<string,(string color,string icon,string label)>
     {
-        new { Name = "All",         Icon = "⊞",  Label = "All Plans"   },
-        new { Name = "Life",        Icon = "♡",  Label = "Life"        },
-        new { Name = "Health",      Icon = "✚",  Label = "Health"      },
-        new { Name = "Motor",       Icon = "◎",  Label = "Motor"       },
-        new { Name = "Home",        Icon = "⌂",  Label = "Home"        },
-        new { Name = "Travel",      Icon = "✦",  Label = "Travel"      },
-        new { Name = "Business",    Icon = "◈",  Label = "Business"    },
-        new { Name = "Agriculture", Icon = "❋",  Label = "Agriculture" },
-        new { Name = "Micro",       Icon = "◉",  Label = "Micro"       },
+        ["All"]         = ("#635bff","🗂","All Plans"),
+        ["Life"]        = ("#e11d48","❤️","Life"),
+        ["Health"]      = ("#059669","🏥","Health"),
+        ["Motor"]       = ("#2563eb","🚗","Motor"),
+        ["Home"]        = ("#ea580c","🏠","Home"),
+        ["Travel"]      = ("#7c3aed","✈️","Travel"),
+        ["Business"]    = ("#0891b2","💼","Business"),
+        ["Agriculture"] = ("#16a34a","🌾","Agriculture"),
+        ["Micro"]       = ("#0d9488","🤝","Micro"),
     };
+
+    string TypeColor(string t) =>
+        typeMap.TryGetValue(t, out var v) ? v.color : "#635bff";
 }
 
 @* ── Toasts ──────────────────────────────────────────────────────────────── *@
@@ -42,54 +46,114 @@
 @* ── Hero ────────────────────────────────────────────────────────────────── *@
 <section class="stripe-hero" id="heroSection">
 
-    @* cockpit blobs (JS-driven parallax) *@
+    @* Grain noise overlay *@
+    <div class="hero-grain"></div>
+
+    @* Cockpit blobs (JS parallax) *@
     <div class="hero-blob hero-blob-1" id="heroBlob1"></div>
     <div class="hero-blob hero-blob-2" id="heroBlob2"></div>
     <div class="hero-blob hero-blob-3" id="heroBlob3"></div>
 
-    @* grid overlay *@
+    @* Floating geometric accents *@
+    <div class="hero-ring hero-ring-1"></div>
+    <div class="hero-ring hero-ring-2"></div>
+    <div class="hero-dots"></div>
+
+    @* Perspective grid *@
     <div class="hero-grid-overlay" id="heroGrid"></div>
 
     <div class="stripe-hero-inner" id="heroInner">
-        <div class="stripe-hero-eyebrow">Kenya's Insurance Supermarket</div>
-        <h1 class="stripe-hero-h1">The right cover,<br/>at the right price.</h1>
-        <p class="stripe-hero-sub">Compare plans from Jubilee, AAR, Britam, Sanlam, Old Mutual, ICEA Lion, APA &amp; CIC — all in one place.</p>
+        <div class="stripe-hero-eyebrow">
+            <span class="eyebrow-dot"></span>
+            Kenya's #1 Insurance Supermarket
+        </div>
+
+        <h1 class="stripe-hero-h1">
+            The right cover,<br/>
+            <span class="h1-gradient">at the right price.</span>
+        </h1>
+
+        <p class="stripe-hero-sub">
+            Compare @Model.Count plans from Jubilee, AAR, Britam, Sanlam, Old Mutual,
+            ICEA Lion, APA &amp; CIC — side by side, in seconds.
+        </p>
 
         <div class="stripe-search-wrap">
-            <svg class="stripe-search-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg class="stripe-search-ico" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
             <input id="searchBox" class="stripe-search" type="text"
-                   placeholder="Search plans, providers or cover type…" autocomplete="off" />
+                   placeholder="Search plans, providers or cover type…" autocomplete="off"/>
             @if (activeType != "All" || activeProvider != "All")
             {
                 <a href="/" class="stripe-search-clear">×</a>
             }
         </div>
+
+        @* Trust signals *@
+        <div class="hero-trust">
+            <div class="trust-item">
+                <span class="trust-num" data-target="@Model.Count">0</span>
+                <span class="trust-label">Plans compared</span>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-item">
+                <span class="trust-num" data-target="8">0</span>
+                <span class="trust-label">Top providers</span>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-item">
+                <span class="trust-num" data-target="50" data-suffix="k+">0</span>
+                <span class="trust-label">Kenyans covered</span>
+            </div>
+            <div class="trust-divider"></div>
+            <div class="trust-item">
+                <span class="trust-val">Free</span>
+                <span class="trust-label">No hidden fees</span>
+            </div>
+        </div>
     </div>
 </section>
 
-@* ── Aisles ──────────────────────────────────────────────────────────────── *@
+@* ── Wavy divider ─────────────────────────────────────────────────────────── *@
+<div class="hero-wave">
+    <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,32 C240,56 480,8 720,32 C960,56 1200,8 1440,32 L1440,56 L0,56 Z" fill="#fafafa"/>
+    </svg>
+</div>
+
+@* ── Page body ────────────────────────────────────────────────────────────── *@
 <div class="stripe-page">
 
+    @* ── Category aisles ─────────────────────────────────────────────────── *@
     <div class="stripe-aisles">
-        @foreach (var a in aisles)
+        @foreach (var kv in typeMap)
         {
-            var href   = a.Name == "All" ? Url.Action("Index","Home") : Url.Action("Index","Home", new { type = a.Name });
-            var active = a.Name == activeType;
-            <a href="@href" class="stripe-aisle @(active ? "active" : "")">
-                <span class="stripe-aisle-icon">@a.Icon</span>
-                <span>@a.Label</span>
+            var href   = kv.Key == "All" ? Url.Action("Index","Home") : Url.Action("Index","Home", new { type = kv.Key });
+            var active = kv.Key == activeType;
+            <a href="@href"
+               class="stripe-aisle @(active ? "active" : "")"
+               style="--aisle-color:@kv.Value.color"
+               data-type="@kv.Key">
+                <span class="stripe-aisle-icon">@kv.Value.icon</span>
+                <span>@kv.Value.label</span>
             </a>
         }
     </div>
 
-    @* ── Provider strip ──────────────────────────────────────────────────── *@
+    @* ── Provider pills ───────────────────────────────────────────────────── *@
     @if (providers.Any())
     {
         <div class="stripe-providers">
             @{
-                var allHref = activeType == "All" ? Url.Action("Index","Home") : Url.Action("Index","Home", new { type = activeType });
+                var allHref = activeType == "All"
+                    ? Url.Action("Index","Home")
+                    : Url.Action("Index","Home", new { type = activeType });
             }
-            <a href="@allHref" class="stripe-pill @(activeProvider == "All" ? "active" : "")">All providers</a>
+            <a href="@allHref" class="stripe-pill @(activeProvider == "All" ? "active" : "")">
+                All providers
+            </a>
             @foreach (var p in providers)
             {
                 var href = activeType == "All"
@@ -100,40 +164,53 @@
         </div>
     }
 
-    @* ── Results count ───────────────────────────────────────────────────── *@
+    @* ── Results row ─────────────────────────────────────────────────────── *@
     <div class="stripe-results-row">
         <p class="stripe-results-text" id="resultsCount">
             <strong>@Model.Count</strong> plan@(Model.Count != 1 ? "s" : "")
-            @if (activeType != "All") { <span>in @activeType</span> }
+            @if (activeType != "All") { <span class="results-tag" style="background:@TypeColor(activeType)20;color:@TypeColor(activeType)">@activeType</span> }
             @if (activeProvider != "All") { <span>· @activeProvider</span> }
         </p>
+        <span class="results-sort-label">Sorted by popularity</span>
     </div>
 
-    @* ── Plan grid ───────────────────────────────────────────────────────── *@
+    @* ── Plan grid ────────────────────────────────────────────────────────── *@
     <div class="stripe-grid" id="shelf">
 
         @if (!Model.Any())
         {
             <div class="stripe-empty">
-                <p>No plans found. <a href="/" class="stripe-link">Browse all →</a></p>
+                <div class="empty-icon">🔍</div>
+                <p>No plans found for this filter.</p>
+                <a href="/" class="stripe-link">Browse all plans →</a>
             </div>
         }
 
         @foreach (var plan in Model)
         {
             var stars       = (int)Math.Round(plan.Rating);
-            var topFeatures = plan.FeatureList.Take(4).ToList();
+            var topFeatures = plan.FeatureList.Take(3).ToList();
+            var typeColor   = TypeColor(plan.Type);
 
-            <div class="stripe-card insurance-plan" data-type="@plan.Type" data-provider="@plan.Provider?.Name">
+            <div class="stripe-card insurance-plan"
+                 data-type="@plan.Type"
+                 data-provider="@plan.Provider?.Name"
+                 style="--card-accent:@typeColor">
+
+                @* shimmer sweep *@
+                <div class="card-shimmer"></div>
+
+                @* top accent bar *@
+                <div class="card-accent-bar"></div>
 
                 @if (plan.IsPopular)
                 {
-                    <div class="stripe-card-ribbon">Most Popular</div>
+                    <div class="stripe-card-ribbon">⭐ Most Popular</div>
                 }
 
                 <div class="stripe-card-head">
                     <span class="stripe-card-provider">@plan.Provider?.Name</span>
-                    <span class="stripe-card-type">@plan.Type</span>
+                    <span class="stripe-card-type" style="color:@typeColor;background:@typeColor+18">@plan.Type</span>
                 </div>
 
                 <h3 class="stripe-card-name">@plan.PlanName</h3>
@@ -149,15 +226,23 @@
                     <span class="stripe-amount">@plan.MonthlyPremium.ToString("N0")</span>
                     <span class="stripe-period">/mo</span>
                 </div>
+
                 <div class="stripe-coverage">
-                    @(plan.CoverageLimit > 0 ? $"Cover up to KES {plan.CoverageLimit:N0}" : "Unlimited cover")
+                    @(plan.CoverageLimit > 0
+                        ? $"Cover up to KES {plan.CoverageLimit:N0}"
+                        : "Unlimited cover")
                 </div>
+
+                <div class="card-divider"></div>
 
                 <ul class="stripe-features">
                     @foreach (var f in topFeatures)
                     {
                         <li>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg class="feat-check" width="14" height="14" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
                             @f
                         </li>
                     }
@@ -175,19 +260,25 @@
                                 data-tier="@plan.Tier"
                                 data-coverage="@plan.CoverageLimit"
                                 data-features="@plan.Features">
-                            Get Quote →
+                            Get Quote
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                         </button>
                     }
                     else
                     {
-                        <a href="/Identity/Account/Login" class="stripe-btn-primary">Get Quote →</a>
+                        <a href="/Identity/Account/Login" class="stripe-btn-primary">
+                            Get Quote
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                        </a>
                     }
-                    <a href="@Url.Action("Details","Home", new { id = plan.Id })" class="stripe-btn-ghost">View details</a>
+                    <a href="@Url.Action("Details","Home", new { id = plan.Id })" class="stripe-btn-ghost">
+                        View details
+                    </a>
                 </div>
-
             </div>
         }
     </div>
+
 </div>
 
 @* ── Quote modal ─────────────────────────────────────────────────────────── *@
@@ -197,8 +288,8 @@
         <div class="modal-plan-badge" id="modalBadge"></div>
         <h2 style="margin:8px 0 4px;font-size:22px;">Get a Quote</h2>
         <p class="modal-plan-name" id="selectedPlan"></p>
-        <p class="modal-provider" id="modalProvider"></p>
-        <p class="modal-price" id="modalPrice"></p>
+        <p class="modal-provider"  id="modalProvider"></p>
+        <p class="modal-price"     id="modalPrice"></p>
         <form id="quoteForm" asp-action="RequestQuote" asp-controller="Home" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="planId"         id="hiddenPlanId" />
@@ -211,13 +302,15 @@
             <input type="hidden" name="features"       id="hiddenFeatures" />
             <div class="modal-field">
                 <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" name="fullName" placeholder="Jane Wanjiku" required />
+                <input type="text" id="fullName" name="fullName" placeholder="Jane Wanjiku" required/>
             </div>
             <div class="modal-field">
                 <label for="emailInput">Email Address</label>
-                <input type="email" id="emailInput" name="email" placeholder="jane@example.com" required />
+                <input type="email" id="emailInput" name="email" placeholder="jane@example.com" required/>
             </div>
-            <button type="submit" class="stripe-btn-primary full" style="margin-top:8px;">Send Quote Request →</button>
+            <button type="submit" class="stripe-btn-primary full" style="margin-top:8px;">
+                Send Quote Request →
+            </button>
         </form>
     </div>
 </div>

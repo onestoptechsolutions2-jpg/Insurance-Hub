@@ -66,6 +66,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const toast = document.getElementById("toast");
     if (toast) setTimeout(() => toast.remove(), 5000);
 
+    // ── Trust counter animation ────────────────────────────────────────────
+
+    function animateCount(el) {
+        const target = parseInt(el.dataset.target ?? "0", 10);
+        const suffix = el.dataset.suffix ?? "";
+        const dur    = 1600;
+        const start  = performance.now();
+        (function step(now) {
+            const prog = Math.min((now - start) / dur, 1);
+            const ease = 1 - Math.pow(1 - prog, 3);
+            el.textContent = Math.round(ease * target) + suffix;
+            if (prog < 1) requestAnimationFrame(step);
+        })(start);
+    }
+
+    const trustNums = document.querySelectorAll(".trust-num[data-target]");
+    if (trustNums.length && "IntersectionObserver" in window) {
+        const io = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) { animateCount(e.target); io.unobserve(e.target); }
+            });
+        }, { threshold: .5 });
+        trustNums.forEach(n => io.observe(n));
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     //  COCKPIT PARALLAX — hero responds to mouse, gyroscope, and scroll
     // ═══════════════════════════════════════════════════════════════════════
