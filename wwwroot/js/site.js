@@ -1,5 +1,28 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+    // ── Mobile nav hamburger ───────────────────────────────────────────────
+    const navToggle = document.getElementById("navToggle");
+    const navDrawer = document.getElementById("navDrawer");
+    if (navToggle && navDrawer) {
+        navToggle.addEventListener("click", () => {
+            const open = navDrawer.classList.toggle("open");
+            navToggle.classList.toggle("open", open);
+            navToggle.setAttribute("aria-expanded", open);
+            navDrawer.setAttribute("aria-hidden", !open);
+            document.body.style.overflow = open ? "hidden" : "";
+        });
+        // Close drawer on outside click
+        document.addEventListener("click", e => {
+            if (!navToggle.contains(e.target) && !navDrawer.contains(e.target)) {
+                navDrawer.classList.remove("open");
+                navToggle.classList.remove("open");
+                navToggle.setAttribute("aria-expanded", false);
+                navDrawer.setAttribute("aria-hidden", true);
+                document.body.style.overflow = "";
+            }
+        });
+    }
+
     const modal          = document.getElementById("quoteModal");
     const closeBtn       = document.getElementById("closeForm");
     const selectedPlan   = document.getElementById("selectedPlan");

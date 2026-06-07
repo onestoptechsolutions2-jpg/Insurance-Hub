@@ -2,25 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fffbf7" />
     <title>InsuranceHub — Kenya's Insurance Supermarket</title>
-    <link rel="stylesheet" href="~/css/site.css" />
-    <link rel="stylesheet" href="~/css/auth.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
 </head>
 <body>
 
-    <header class="header">
-        <div class="header-container">
-            <a href="/" class="logo">InsuranceHub</a>
-            <partial name="_LoginPartial" />
+    <header class="stripe-header" id="siteHeader">
+        <div class="stripe-header-inner">
+
+            <a href="/" class="stripe-logo">
+                <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+                    <rect width="30" height="30" rx="9" fill="url(#logoGrad)"/>
+                    <defs>
+                        <linearGradient id="logoGrad" x1="0" y1="0" x2="30" y2="30">
+                            <stop offset="0%" stop-color="#d97706"/>
+                            <stop offset="100%" stop-color="#f59e0b"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M9 15.5C9 11.5 11.8 9 15.5 9C18.2 9 20.4 10.4 21.5 12.5H18.8C18 11.2 16.8 10.5 15.5 10.5C12.9 10.5 11 12.6 11 15.5C11 18.4 12.9 20.5 15.5 20.5C16.8 20.5 18 19.8 18.8 18.5H21.5C20.4 20.6 18.2 22 15.5 22C11.8 22 9 19.5 9 15.5Z" fill="white"/>
+                </svg>
+                <span>InsuranceHub</span>
+            </a>
+
+            @* desktop nav *@
+            <div class="nav-desktop">
+                <partial name="_LoginPartial" />
+            </div>
+
+            @* mobile hamburger *@
+            <button class="nav-hamburger" id="navToggle" aria-label="Open menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+
+        @* mobile drawer *@
+        <div class="nav-drawer" id="navDrawer" aria-hidden="true">
+            <div class="nav-drawer-inner">
+                <partial name="_LoginPartial" />
+            </div>
         </div>
     </header>
 
-    <main class="main-container">
-        @RenderBody()
-    </main>
+    @RenderBody()
 
-    <script src="~/js/site.js"></script>
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div class="footer-brand">
+                <span class="footer-logo">InsuranceHub</span>
+                <p class="footer-tagline">Kenya's simplest way to compare &amp; buy insurance.</p>
+            </div>
+            <div class="footer-links">
+                <a href="/">Browse Plans</a>
+                <a href="/profile">My Account</a>
+                <a href="/compare">Compare</a>
+            </div>
+            <p class="footer-copy">© @DateTime.Now.Year InsuranceHub. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>
