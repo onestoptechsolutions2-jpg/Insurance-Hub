@@ -190,7 +190,7 @@
         {
             var stars       = (int)Math.Round(plan.Rating);
             var topFeatures = plan.FeatureList.Take(3).ToList();
-            var typeColor   = TypeColor(plan.Type);
+            var typeColor   = TypeColor(plan.Type.ToString());
 
             <div class="stripe-card insurance-plan"
                  data-type="@plan.Type"
