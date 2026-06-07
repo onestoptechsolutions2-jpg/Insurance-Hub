@@ -76,3 +76,33 @@ document.addEventListener("DOMContentLoaded", () => {
     if (toast) setTimeout(() => toast.remove(), 5000);
 
 });
+
+// ── Compare bar (global, not inside DOMContentLoaded) ─────────────────────
+
+function updateCompareBar() {
+    const checked = Array.from(document.querySelectorAll(".compare-checkbox:checked"));
+    const bar     = document.getElementById("compareBar");
+    const link    = document.getElementById("compareLink");
+    const count   = document.getElementById("compareCount");
+
+    // Enforce max 3
+    if (checked.length > 3) {
+        event.target.checked = false;
+        return;
+    }
+
+    if (checked.length < 2) {
+        bar.style.display = "none";
+        return;
+    }
+
+    const ids = checked.map(c => c.value).join(",");
+    bar.style.display  = "flex";
+    count.textContent  = `${checked.length} plan${checked.length > 1 ? "s" : ""} selected`;
+    link.href          = `/compare?ids=${ids}`;
+}
+
+function clearCompare() {
+    document.querySelectorAll(".compare-checkbox:checked").forEach(c => c.checked = false);
+    document.getElementById("compareBar").style.display = "none";
+}

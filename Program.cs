@@ -53,6 +53,7 @@ builder.Services.AddDataProtection()
 //   EmailSettings__AgentEmail=agent@company.com
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddHostedService<PolicyReminderService>();
 
 // ── Health checks ──────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks();

@@ -41,6 +41,13 @@ namespace Insurance_Hub.Services
             await SendAsync(data.ClientEmail, subject, body);
         }
 
+        public async Task SendPolicyReminderAsync(PolicyReminderData data)
+        {
+            var subject = $"Your {data.PolicyName} policy renews in {data.DaysRemaining} days";
+            var body    = BuildReminderEmailBody(data);
+            await SendAsync(data.ClientEmail, subject, body);
+        }
+
         // ── Private helpers ───────────────────────────────────────────────
 
         private async Task SendAsync(string to, string subject, string htmlBody)
@@ -135,6 +142,47 @@ namespace Insurance_Hub.Services
             </html>
             """;
         }
+
+        private static string BuildReminderEmailBody(PolicyReminderData d) => $"""
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8" /></head>
+            <body style="font-family:Inter,Arial,sans-serif;background:#f6f9fc;padding:32px;">
+              <div style="max-width:560px;margin:auto;background:#fff;border-radius:16px;border:1px solid #e6ebf1;padding:36px;">
+                <div style="font-size:22px;font-weight:700;color:#0a2540;margin-bottom:4px;">InsuranceHub</div>
+                <div style="font-size:13px;color:#425466;margin-bottom:28px;">Policy Renewal Reminder</div>
+
+                <div style="background:#fff8ed;border:1px solid #fcd34d;border-radius:10px;padding:14px 18px;margin-bottom:24px;font-size:14px;font-weight:600;color:#92400e;">
+                  ⏰ Your policy renews in <strong>{d.DaysRemaining} days</strong> — {d.RenewalDate:dd MMM yyyy}
+                </div>
+
+                <div style="font-size:20px;font-weight:700;color:#0a2540;margin-bottom:8px;">Hi {d.ClientName},</div>
+                <p style="font-size:15px;color:#425466;line-height:1.7;margin:0 0 24px;">
+                  This is a reminder that your <strong>{d.PolicyName}</strong> policy with <strong>{d.ProviderName}</strong>
+                  is due for renewal on <strong>{d.RenewalDate:dd MMMM yyyy}</strong>.
+                </p>
+
+                <div style="background:#f0f4ff;border-radius:10px;padding:18px 20px;margin-bottom:28px;">
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#635bff;margin-bottom:6px;">{d.InsuranceType}</div>
+                  <div style="font-size:18px;font-weight:700;color:#0a2540;">{d.PolicyName}</div>
+                  <div style="font-size:13px;color:#425466;margin-top:2px;">{d.ProviderName}</div>
+                  <div style="font-size:24px;font-weight:700;color:#0a2540;margin-top:12px;">KES {d.MonthlyPremium:N2}<span style="font-size:13px;font-weight:400;">/mo</span></div>
+                </div>
+
+                <p style="font-size:14px;color:#425466;line-height:1.7;margin:0 0 24px;">
+                  Want to compare alternatives before renewing? Browse plans on InsuranceHub and see if there's
+                  a better deal available for you.
+                </p>
+
+                <a href="https://cn.laitor.co.ke" style="display:inline-block;background:#635bff;color:#fff;font-size:14px;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">Compare Plans Now</a>
+
+                <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e6ebf1;font-size:12px;color:#a0aab4;">
+                  &copy; {DateTime.UtcNow.Year} InsuranceHub. To stop reminders, visit your profile and disable notifications.
+                </div>
+              </div>
+            </body>
+            </html>
+            """;
 
         private static string BuildClientEmailBody(QuoteEmailData d)
         {

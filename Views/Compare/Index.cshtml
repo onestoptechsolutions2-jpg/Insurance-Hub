@@ -1,0 +1,129 @@
+@model List<Insurance_Hub.Models.InsurancePlan>
+@using Insurance_Hub.Models
+
+@{
+    Layout = "_Layout";
+    var allFeatures = Model
+        .SelectMany(p => p.FeatureList)
+        .Distinct()
+        .OrderBy(f => f)
+        .ToList();
+}
+
+<div style="margin-bottom:20px;">
+    <a href="/" class="back-link">← Back to plans</a>
+</div>
+
+<h1 style="font-size:28px;font-weight:800;color:var(--text);margin:0 0 6px;">Compare Plans</h1>
+<p style="color:var(--muted);margin:0 0 32px;">Side-by-side comparison of @Model.Count plan@(Model.Count != 1 ? "s" : "")</p>
+
+<div class="compare-grid" style="grid-template-columns: 180px repeat(@Model.Count, 1fr);">
+
+    @* Header row *@
+    <div class="compare-label-cell"></div>
+    @foreach (var plan in Model)
+    {
+        <div class="compare-plan-header">
+            <div class="plan-badge" style="margin-bottom:8px;">@plan.Type</div>
+            <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px;">@plan.PlanName</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">@plan.Provider?.Name</div>
+            @if (plan.IsPopular)
+            {
+                <div class="popular-chip" style="display:inline-block;margin-bottom:12px;">Popular</div>
+            }
+        </div>
+    }
+
+    @* Price row *@
+    <div class="compare-label-cell">Monthly Premium</div>
+    @foreach (var plan in Model)
+    {
+        <div class="compare-value-cell compare-highlight">
+            <span style="font-size:22px;font-weight:800;color:var(--text);">KES @plan.MonthlyPremium.ToString("N0")</span>
+            <span style="font-size:13px;color:var(--muted);">/mo</span>
+        </div>
+    }
+
+    @* Coverage row *@
+    <div class="compare-label-cell">Coverage Limit</div>
+    @foreach (var plan in Model)
+    {
+        <div class="compare-value-cell">
+            @(plan.CoverageLimit > 0 ? $"KES {plan.CoverageLimit:N0}" : "Unlimited")
+        </div>
+    }
+
+    @* Deductible row *@
+    <div class="compare-label-cell">Deductible / Excess</div>
+    @foreach (var plan in Model)
+    {
+        <div class="compare-value-cell">
+            @(plan.Deductible > 0 ? $"KES {plan.Deductible:N0}" : "None")
+        </div>
+    }
+
+    @* Tier row *@
+    <div class="compare-label-cell">Plan Tier</div>
+    @foreach (var plan in Model)
+    {
+        <div class="compare-value-cell">
+            <span class="plan-badge">@plan.Tier</span>
+        </div>
+    }
+
+    @* Rating row *@
+    <div class="compare-label-cell">Rating</div>
+    @foreach (var plan in Model)
+    {
+        var stars = (int)Math.Round(plan.Rating);
+        <div class="compare-value-cell">
+            <div class="star-row">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <span class="star @(i <= stars ? "star-filled" : "star-empty")">★</span>
+                }
+                <span class="rating-num">@plan.Rating.ToString("0.0")</span>
+            </div>
+        </div>
+    }
+
+    @* Provider row *@
+    <div class="compare-label-cell">Provider</div>
+    @foreach (var plan in Model)
+    {
+        <div class="compare-value-cell">
+            <div style="font-weight:600;font-size:14px;">@plan.Provider?.Name</div>
+            <div style="font-size:12px;color:var(--muted);">@plan.Provider?.Country</div>
+        </div>
+    }
+
+    @* Features section *@
+    <div class="compare-label-cell compare-section-header" style="grid-column: 1 / -1;">
+        Features
+    </div>
+
+    @foreach (var feature in allFeatures)
+    {
+        <div class="compare-label-cell compare-feature-label">@feature</div>
+        @foreach (var plan in Model)
+        {
+            var has = plan.FeatureList.Contains(feature);
+            <div class="compare-value-cell @(has ? "compare-yes" : "compare-no")">
+                @(has ? "✓" : "—")
+            </div>
+        }
+    }
+
+    @* CTA row *@
+    <div class="compare-label-cell"></div>
+    @foreach (var plan in Model)
+    {
+        <div class="compare-value-cell">
+            <a href="@Url.Action("Details", "Home", new { id = plan.Id })"
+               class="btn-primary" style="display:block;text-align:center;text-decoration:none;font-size:14px;">
+                View Details
+            </a>
+        </div>
+    }
+
+</div>

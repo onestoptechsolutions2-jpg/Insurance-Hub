@@ -4,6 +4,7 @@ namespace Insurance_Hub.Services
     {
         Task SendQuoteRequestToAgentAsync(QuoteEmailData data);
         Task SendQuoteConfirmationToClientAsync(QuoteEmailData data);
+        Task SendPolicyReminderAsync(PolicyReminderData data);
     }
 
     public record QuoteEmailData(
@@ -17,5 +18,16 @@ namespace Insurance_Hub.Services
         decimal CoverageLimit,
         string Features,
         DateTime RequestedAt
+    );
+
+    public record PolicyReminderData(
+        string ClientName,
+        string ClientEmail,
+        string PolicyName,
+        string ProviderName,
+        string InsuranceType,
+        DateTime RenewalDate,
+        int DaysRemaining,
+        decimal MonthlyPremium
     );
 }

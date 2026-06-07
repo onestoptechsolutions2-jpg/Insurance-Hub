@@ -18,6 +18,7 @@ namespace Insurance_Hub.Data
         public DbSet<Provider> Providers => Set<Provider>();
         public DbSet<InsurancePlan> InsurancePlans => Set<InsurancePlan>();
         public DbSet<QuoteRequest> QuoteRequests => Set<QuoteRequest>();
+        public DbSet<UserPolicy> UserPolicies => Set<UserPolicy>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -63,6 +64,23 @@ namespace Insurance_Hub.Data
                 entity.Property(q => q.RequestedAt).HasDefaultValueSql("now()");
                 entity.Property(q => q.Status).HasConversion<string>().HasMaxLength(20);
                 entity.Property(q => q.AdminNotes).HasMaxLength(1000);
+            });
+
+            builder.Entity<UserPolicy>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.UserId).IsRequired();
+                entity.Property(p => p.PolicyName).IsRequired().HasMaxLength(200);
+                entity.Property(p => p.ProviderName).IsRequired().HasMaxLength(200);
+                entity.Property(p => p.InsuranceType).HasMaxLength(50);
+                entity.Property(p => p.PolicyNumber).HasMaxLength(100);
+                entity.Property(p => p.MonthlyPremium).HasColumnType("numeric(10,2)");
+                entity.Property(p => p.CreatedAt).HasDefaultValueSql("now()");
+
+                entity.HasOne(p => p.User)
+                      .WithMany()
+                      .HasForeignKey(p => p.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

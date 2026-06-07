@@ -117,7 +117,7 @@
                 }
             </ul>
 
-            <div class="card-actions">
+                <div class="card-actions">
                 <a href="@Url.Action("Details", "Home", new { id = plan.Id })"
                    class="btn-secondary">View Details</a>
 
@@ -141,9 +141,27 @@
                 }
             </div>
 
+            <label class="compare-check-label">
+                <input type="checkbox" class="compare-checkbox" value="@plan.Id"
+                       onchange="updateCompareBar()" />
+                Compare
+            </label>
+
         </div>
     }
 </section>
+
+@* ── Compare bar ──────────────────────────────────────────────────────────── *@
+<div id="compareBar" class="compare-bar" style="display:none;">
+    <div class="compare-bar-inner">
+        <span id="compareCount" class="compare-bar-count">0 plans selected</span>
+        <span class="compare-bar-hint">Select up to 3 plans to compare</span>
+        <div style="display:flex;gap:10px;margin-left:auto;">
+            <button onclick="clearCompare()" class="btn-secondary" style="padding:8px 16px;font-size:13px;">Clear</button>
+            <a id="compareLink" href="#" class="btn-primary" style="padding:8px 20px;font-size:13px;text-decoration:none;">Compare →</a>
+        </div>
+    </div>
+</div>
 
 @* ── Quote modal ─────────────────────────────────────────────────────────── *@
 <div id="quoteModal" class="modal">
