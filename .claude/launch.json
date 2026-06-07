@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "insurance-hub",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "C:\\Users\\Billions\\source\\repos\\Insurance Hub\\Insurance Hub.csproj", "--launch-profile", "http"],
+      "port": 5055
+    }
+  ]
+}
