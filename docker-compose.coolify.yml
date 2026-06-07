@@ -39,6 +39,13 @@ services:
     restart: unless-stopped
     ports:
       - "5055:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.insurancehub.rule=Host(`cn.laitor.co.ke`)"
+      - "traefik.http.routers.insurancehub.entrypoints=https"
+      - "traefik.http.routers.insurancehub.tls=true"
+      - "traefik.http.routers.insurancehub.tls.certresolver=letsencrypt"
+      - "traefik.http.services.insurancehub.loadbalancer.server.port=8080"
     environment:
       ASPNETCORE_ENVIRONMENT:        Production
       DOTNET_RUNNING_IN_CONTAINER:   "true"
@@ -65,6 +72,9 @@ services:
       timeout: 10s
       start_period: 60s
       retries: 3
+    networks:
+      - default
+      - traefik
 
 # ── Volume — created manually once on the server before first deploy ──────────
 # docker volume create insurancehub_pgdata
@@ -73,3 +83,9 @@ volumes:
   pgdata:
     external: true
     name: insurancehub_pgdata
+
+networks:
+  default: {}
+  traefik:
+    external: true
+    name: coolify
