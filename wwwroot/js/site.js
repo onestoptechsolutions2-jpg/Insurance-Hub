@@ -63,9 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const q = searchBox.value.toLowerCase().trim();
 
         document.querySelectorAll(".insurance-plan").forEach(card => {
-            const name     = card.querySelector(".plan-name")?.textContent.toLowerCase() ?? "";
+            const name     = card.querySelector(".stripe-card-name")?.textContent.toLowerCase() ?? "";
             const type     = card.dataset.type?.toLowerCase() ?? "";
-            const provider = card.querySelector(".plan-provider")?.textContent.toLowerCase() ?? "";
+            const provider = card.dataset.provider?.toLowerCase() ?? "";
             card.style.display = (!q || name.includes(q) || type.includes(q) || provider.includes(q)) ? "" : "none";
         });
     });
