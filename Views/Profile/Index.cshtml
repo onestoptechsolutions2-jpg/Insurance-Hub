@@ -5,43 +5,46 @@
     Layout = "_Layout";
     var quotes   = ViewBag.Quotes   as List<QuoteRequest>  ?? new();
     var policies = ViewBag.Policies as List<UserPolicy>    ?? new();
+    var today    = DateTime.UtcNow.Date;
 }
 
 @if (TempData["Success"] is string ok)
 {
-    <div class="toast toast-success" id="toast">
+    <div class="s-toast s-toast-success" id="toast">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         <span>@ok</span>
-        <button class="toast-close" onclick="document.getElementById('toast').remove()">×</button>
+        <button class="s-toast-close" onclick="this.parentElement.remove()">×</button>
     </div>
 }
-@if (TempData["PolicyError"] is string err)
+@if (TempData["PolicyError"] is string pe)
 {
-    <div class="toast toast-error" id="toast-err">
-        <span>@err</span>
-        <button class="toast-close" onclick="document.getElementById('toast-err').remove()">×</button>
+    <div class="s-toast s-toast-error" id="toast-err">
+        <span>@pe</span>
+        <button class="s-toast-close" onclick="this.parentElement.remove()">×</button>
     </div>
 }
 
-<div class="profile-shell">
+<div class="profile-shell" id="profileShell">
 
-    @* ── Avatar card ──────────────────────────────────────────────────────── *@
-    <div class="profile-card">
+    @* ── Identity card ─────────────────────────────────────────────────────── *@
+    <div class="profile-card" id="profileCard">
         <div class="profile-avatar">@((string.IsNullOrWhiteSpace(Model.DisplayName) ? (Model.Email ?? "?") : Model.DisplayName)[0].ToString().ToUpper())</div>
-        <div>
+        <div class="profile-card-info">
             <div class="profile-name">@(string.IsNullOrWhiteSpace(Model.DisplayName) ? Model.Email : Model.DisplayName)</div>
             <div class="profile-email">@Model.Email</div>
-            @if (User.IsInRole("Admin"))
-            {
-                <span class="profile-role-badge">Admin</span>
-            }
+            <div class="profile-meta-row">
+                @if (User.IsInRole("Admin")) { <span class="profile-role-badge">Admin</span> }
+                <span class="profile-stat">@quotes.Count quote@(quotes.Count != 1 ? "s" : "")</span>
+                <span class="profile-stat-dot">·</span>
+                <span class="profile-stat">@policies.Count polic@(policies.Count != 1 ? "ies" : "y")</span>
+            </div>
         </div>
     </div>
 
-    @* ── Top grid: Edit Profile + tabs ────────────────────────────────────── *@
     <div class="profile-grid">
 
-        @* Edit profile (left) *@
-        <section class="profile-section">
+        @* ── Edit profile ─────────────────────────────────────────────────── *@
+        <section class="profile-section" id="editSection">
             <h2 class="profile-section-title">Edit Profile</h2>
             <form method="post" action="/profile" class="profile-form">
                 @Html.AntiForgeryToken()
@@ -57,35 +60,100 @@
                     <label class="profile-label">Email</label>
                     <input class="profile-input" value="@Model.Email" disabled />
                 </div>
-                <button type="submit" class="btn-primary" style="margin-top:8px">Save Changes</button>
+                <button type="submit" class="profile-save-btn">Save Changes</button>
             </form>
         </section>
 
-        @* Tabbed right panel *@
-        <div>
-            @* Tab navigation *@
-            <div class="profile-tabs">
-                <button class="profile-tab active" onclick="switchTab('quotes', this)">
-                    Quote History
-                    @if (quotes.Any())
-                    {
-                        <span class="tab-count">@quotes.Count</span>
-                    }
-                </button>
-                <button class="profile-tab" onclick="switchTab('policies', this)">
-                    My Policies
-                    @if (policies.Any())
-                    {
-                        <span class="tab-count">@policies.Count</span>
-                    }
-                </button>
-            </div>
+        @* ── Right column ─────────────────────────────────────────────────── *@
+        <div class="profile-right">
 
-            @* ── Quote History tab ────────────────────────────────────────── *@
-            <section class="profile-section" id="tab-quotes" style="border-top-left-radius:0;">
+            @* ── Active Policies ──────────────────────────────────────────── *@
+            <section class="profile-section" id="policiesSection">
+                <div class="profile-section-header">
+                    <h2 class="profile-section-title" style="margin:0">My Policies</h2>
+                    <button class="profile-add-btn" onclick="document.getElementById('addPolicyModal').style.display='flex'">
+                        + Add Policy
+                    </button>
+                </div>
+
+                @if (!policies.Any())
+                {
+                    <div class="profile-empty-state">
+                        <div class="profile-empty-icon">🛡</div>
+                        <p>No active policies added yet.</p>
+                        <button class="profile-link-btn" onclick="document.getElementById('addPolicyModal').style.display='flex'">
+                            Register your first policy →
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="policies-list">
+                        @foreach (var p in policies)
+                        {
+                            var daysLeft = (p.RenewalDate.Date - today).Days;
+                            var urgency  = daysLeft <= 14 ? "renewal-urgent"
+                                         : daysLeft <= 30 ? "renewal-soon"
+                                         : "renewal-ok";
+
+                            <div class="policy-row">
+                                <div class="policy-row-left">
+                                    <div class="policy-name">@p.PolicyName</div>
+                                    <div class="policy-meta">
+                                        @p.ProviderName
+                                        @if (!string.IsNullOrWhiteSpace(p.InsuranceType)) { <span class="policy-type-pill">@p.InsuranceType</span> }
+                                        @if (!string.IsNullOrWhiteSpace(p.PolicyNumber)) { <span class="policy-num">· @p.PolicyNumber</span> }
+                                    </div>
+                                    <div class="policy-premium">KES @p.MonthlyPremium.ToString("N0")/mo</div>
+                                </div>
+                                <div class="policy-row-right">
+                                    <div class="policy-renewal @urgency">
+                                        @if (daysLeft < 0)
+                                        {
+                                            <span>Expired @(-daysLeft)d ago</span>
+                                        }
+                                        else if (daysLeft == 0)
+                                        {
+                                            <span>Renews today!</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Renews in @daysLeft day@(daysLeft != 1 ? "s" : "")</span>
+                                        }
+                                        <span class="policy-renewal-date">@p.RenewalDate.ToString("d MMM yyyy")</span>
+                                    </div>
+                                    <div class="policy-actions">
+                                        <form method="post" action="/profile/policies/toggle-reminders/@p.Id" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="policy-btn @(p.RemindersEnabled ? "policy-btn-on" : "policy-btn-off")"
+                                                    title="@(p.RemindersEnabled ? "Reminders on — click to disable" : "Reminders off — click to enable")">
+                                                🔔
+                                            </button>
+                                        </form>
+                                        <form method="post" action="/profile/policies/delete/@p.Id" style="display:inline"
+                                              onsubmit="return confirm('Remove @p.PolicyName from your policies?')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="policy-btn policy-btn-del" title="Remove policy">×</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            @* ── Quote history ─────────────────────────────────────────────── *@
+            <section class="profile-section" id="quotesSection">
+                <h2 class="profile-section-title">Quote History</h2>
+
                 @if (!quotes.Any())
                 {
-                    <p class="profile-empty">No quote requests yet. <a href="/" class="profile-link">Browse plans →</a></p>
+                    <div class="profile-empty-state">
+                        <div class="profile-empty-icon">📋</div>
+                        <p>No quotes requested yet.</p>
+                        <a href="/" class="profile-link-btn">Browse plans →</a>
+                    </div>
                 }
                 else
                 {
@@ -105,129 +173,64 @@
                 }
             </section>
 
-            @* ── My Policies tab ─────────────────────────────────────────── *@
-            <section class="profile-section" id="tab-policies" style="display:none;border-top-left-radius:0;">
-
-                @if (policies.Any())
-                {
-                    <div class="quotes-list" style="margin-bottom:24px;">
-                        @foreach (var p in policies)
-                        {
-                            var daysLeft = (p.RenewalDate.Date - DateTime.UtcNow.Date).Days;
-                            var urgency  = daysLeft <= 7 ? "urgent" : daysLeft <= 30 ? "soon" : "ok";
-                            <div class="quote-row">
-                                <div class="quote-row-info">
-                                    <div class="quote-row-plan">@p.PolicyName</div>
-                                    <div class="quote-row-meta">@p.ProviderName · @p.InsuranceType · KES @p.MonthlyPremium.ToString("N0")/mo</div>
-                                    <div class="quote-row-date">
-                                        Renews @p.RenewalDate.ToString("d MMM yyyy")
-                                        @if (daysLeft >= 0)
-                                        {
-                                            <span class="renewal-badge renewal-@urgency">@daysLeft days</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="renewal-badge renewal-urgent">Expired</span>
-                                        }
-                                    </div>
-                                    @if (!string.IsNullOrWhiteSpace(p.PolicyNumber))
-                                    {
-                                        <div class="quote-row-date">Policy No: @p.PolicyNumber</div>
-                                    }
-                                </div>
-                                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0;">
-                                    <form method="post" action="/profile/policies/toggle-reminders/@p.Id" style="margin:0;">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="reminder-toggle @(p.RemindersEnabled ? "reminder-on" : "reminder-off")"
-                                                title="@(p.RemindersEnabled ? "Reminders on — click to disable" : "Reminders off — click to enable")">
-                                            🔔 @(p.RemindersEnabled ? "On" : "Off")
-                                        </button>
-                                    </form>
-                                    <form method="post" action="/profile/policies/delete/@p.Id"
-                                          onsubmit="return confirm('Remove this policy?');" style="margin:0;">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn-delete">Remove</button>
-                                    </form>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-
-                @* Add policy form *@
-                <h3 style="font-size:15px;font-weight:700;color:var(--text);margin:0 0 16px;">
-                    + Register an Existing Policy
-                </h3>
-                <form method="post" action="/profile/policies/add">
-                    @Html.AntiForgeryToken()
-                    <div class="profile-field">
-                        <label class="profile-label">Policy / Plan Name *</label>
-                        <input class="profile-input" name="policyName" placeholder="e.g. Jubilee Comprehensive Motor" required />
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="profile-field">
-                            <label class="profile-label">Provider / Insurer *</label>
-                            <input class="profile-input" name="providerName" placeholder="e.g. Jubilee Insurance" required />
-                        </div>
-                        <div class="profile-field">
-                            <label class="profile-label">Insurance Type</label>
-                            <select class="profile-input" name="insuranceType">
-                                @foreach (var t in new[] { "Motor","Health","Life","Home","Travel","Business","Agriculture","Micro" })
-                                {
-                                    <option value="@t">@t</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="profile-field">
-                            <label class="profile-label">Policy Number</label>
-                            <input class="profile-input" name="policyNumber" placeholder="Optional" />
-                        </div>
-                        <div class="profile-field">
-                            <label class="profile-label">Monthly Premium (KES)</label>
-                            <input class="profile-input" name="monthlyPremium" type="number" min="0" step="0.01" placeholder="0.00" />
-                        </div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="profile-field">
-                            <label class="profile-label">Start Date *</label>
-                            <input class="profile-input" name="startDate" type="date" required />
-                        </div>
-                        <div class="profile-field">
-                            <label class="profile-label">Renewal Date *</label>
-                            <input class="profile-input" name="renewalDate" type="date" required />
-                        </div>
-                    </div>
-                    <div class="profile-field" style="flex-direction:row;align-items:center;gap:10px;">
-                        <input type="checkbox" name="remindersEnabled" value="true" id="remindersCheck" checked style="width:auto;margin:0;padding:0;" />
-                        <label for="remindersCheck" class="profile-label" style="margin:0;cursor:pointer;">
-                            Email me reminders 30, 14 &amp; 7 days before renewal
-                        </label>
-                    </div>
-                    <button type="submit" class="btn-primary" style="margin-top:4px;">Add Policy</button>
-                </form>
-            </section>
         </div>
-
     </div>
 </div>
 
-@section Scripts {
-<script>
-function switchTab(name, btn) {
-    document.querySelectorAll('.profile-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-quotes').style.display   = name === 'quotes'   ? '' : 'none';
-    document.getElementById('tab-policies').style.display = name === 'policies' ? '' : 'none';
-}
-// Auto-open policies tab if there's a PolicyError
-@if (TempData["PolicyError"] != null)
-{
-    <text>document.addEventListener('DOMContentLoaded', () => {
-        const btn = document.querySelectorAll('.profile-tab')[1];
-        if (btn) switchTab('policies', btn);
-    });</text>
-}
-</script>
-}
+@* ── Add Policy Modal ─────────────────────────────────────────────────────── *@
+<div id="addPolicyModal" class="a-modal-overlay" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+    <div class="a-modal" style="width:520px">
+        <h3 class="a-modal-title">Register a Policy</h3>
+        <p style="font-size:13px;color:#64748b;margin:-8px 0 20px">Track an existing policy — set renewal reminders and keep everything in one place.</p>
+        <form method="post" action="/profile/policies/add">
+            @Html.AntiForgeryToken()
+            <div class="a-form-grid">
+                <div class="a-form-group a-span-2">
+                    <label class="a-label">Policy / Plan Name <span style="color:#e11d48">*</span></label>
+                    <input class="a-input" name="policyName" placeholder="e.g. Jubilee Comprehensive Motor" required maxlength="200" />
+                </div>
+                <div class="a-form-group">
+                    <label class="a-label">Provider <span style="color:#e11d48">*</span></label>
+                    <input class="a-input" name="providerName" placeholder="e.g. Jubilee Insurance" required maxlength="200" />
+                </div>
+                <div class="a-form-group">
+                    <label class="a-label">Cover Type</label>
+                    <select class="a-select" name="insuranceType">
+                        <option value="">— select —</option>
+                        @foreach (var t in Enum.GetValues<InsuranceType>())
+                        {
+                            <option value="@t">@t</option>
+                        }
+                    </select>
+                </div>
+                <div class="a-form-group">
+                    <label class="a-label">Policy Number</label>
+                    <input class="a-input" name="policyNumber" placeholder="Optional" maxlength="100" />
+                </div>
+                <div class="a-form-group">
+                    <label class="a-label">Monthly Premium (KES)</label>
+                    <input class="a-input" name="monthlyPremium" type="number" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="a-form-group">
+                    <label class="a-label">Start Date</label>
+                    <input class="a-input" name="startDate" type="date" value="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="a-form-group">
+                    <label class="a-label">Renewal Date <span style="color:#e11d48">*</span></label>
+                    <input class="a-input" name="renewalDate" type="date" required
+                           value="@DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="a-form-group a-center-self">
+                    <label class="a-checkbox-label">
+                        <input type="checkbox" name="remindersEnabled" value="true" checked />
+                        Email reminders before renewal
+                    </label>
+                </div>
+            </div>
+            <div class="a-modal-actions">
+                <button type="button" class="a-btn-ghost" onclick="document.getElementById('addPolicyModal').style.display='none'">Cancel</button>
+                <button type="submit" class="a-btn-primary">Save Policy</button>
+            </div>
+        </form>
+    </div>
+</div>
