@@ -29,7 +29,7 @@ namespace Insurance_Hub.Controllers
         public async Task<IActionResult> Index()
         {
             var endpoints = await _db.WebhookEndpoints.OrderByDescending(w => w.CreatedAt).ToListAsync();
-            return View(endpoints);
+            return View("~/Views/Admin/Webhooks.cshtml", endpoints);
         }
 
         [HttpPost("create")]

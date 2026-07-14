@@ -22,7 +22,7 @@ namespace Insurance_Hub.Controllers
         public async Task<IActionResult> Index()
         {
             var settings = await _settings.GetAsync();
-            return View(settings);
+            return View("~/Views/Admin/Settings.cshtml", settings);
         }
 
         [HttpPost("branding")]
