@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,8 +53,15 @@ builder.Services.AddDataProtection()
 //   EmailSettings__SenderPassword=app-password
 //   EmailSettings__AgentEmail=agent@company.com
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddHostedService<PolicyReminderService>();
+
+// ── Outbound webhooks ───────────────────────────────────────────────────────
+builder.Services.AddHttpClient<IWebhookDispatcher, WebhookDispatcher>(c => c.Timeout = TimeSpan.FromSeconds(10));
+
+// ── SMS (Africa's Talking) ──────────────────────────────────────────────────
+builder.Services.AddHttpClient<ISmsService, AfricasTalkingSmsService>(c => c.Timeout = TimeSpan.FromSeconds(10));
 
 // ── Health checks ──────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks();
@@ -113,10 +121,16 @@ app.MapRazorPages();
 // ── Seed database on startup ───────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
-    var db          = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var db                     = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var roleManager            = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager            = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var config                 = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var emailOptions           = scope.ServiceProvider.GetRequiredService<IOptions<EmailSettings>>();
+    var dataProtectionProvider = scope.ServiceProvider.GetRequiredService<IDataProtectionProvider>();
     await DbInitializer.SeedAsync(db);
     await DbInitializer.SeedRolesAsync(roleManager);
+    await DbInitializer.SeedAdminUserAsync(userManager, config);
+    await DbInitializer.SeedAppSettingsAsync(db, emailOptions, dataProtectionProvider);
 }
 
 app.Run();

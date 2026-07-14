@@ -1,5 +1,6 @@
 using Insurance_Hub.Data;
 using Insurance_Hub.Models;
+using Insurance_Hub.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,13 @@ namespace Insurance_Hub.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IWebhookDispatcher _webhooks;
 
-        public AdminController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public AdminController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IWebhookDispatcher webhooks)
         {
             _db = db;
             _userManager = userManager;
+            _webhooks = webhooks;
         }
 
         [HttpGet("")]
@@ -35,6 +38,7 @@ namespace Insurance_Hub.Controllers
 
             var quotes = await query.OrderByDescending(q => q.RequestedAt).ToListAsync();
             ViewBag.StatusFilter = status;
+            ViewBag.Users = await _userManager.Users.OrderBy(u => u.Email).ToListAsync();
             return View(quotes);
         }
 
@@ -50,7 +54,74 @@ namespace Insurance_Hub.Controllers
                 quote.AdminNotes = adminNotes.Trim();
 
             await _db.SaveChangesAsync();
+
+            var webhookPayload = new
+            {
+                quoteId      = quote.Id,
+                fullName     = quote.FullName,
+                email        = quote.Email,
+                planName     = quote.PlanName,
+                providerName = quote.ProviderName,
+                adminNotes   = quote.AdminNotes
+            };
+
+            if (status == QuoteStatus.Sold)
+                await _webhooks.DispatchAsync(WebhookEventType.QuoteSold, webhookPayload);
+            else if (status == QuoteStatus.Lost)
+                await _webhooks.DispatchAsync(WebhookEventType.QuoteLost, webhookPayload);
+
             TempData["Success"] = "Quote updated.";
+            return RedirectToAction(nameof(Quotes));
+        }
+
+        // POST /admin/quotes/{id}/convert — book a Sold quote as an active UserPolicy
+        [HttpPost("quotes/{id}/convert")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConvertQuoteToPolicy(
+            int id, string userId, string? policyNumber,
+            DateTime startDate, DateTime renewalDate, decimal monthlyPremium)
+        {
+            var quote = await _db.QuoteRequests.FindAsync(id);
+            if (quote is null) return NotFound();
+
+            if (quote.Status != QuoteStatus.Sold)
+            {
+                TempData["Error"] = "Only quotes marked as Sold can be converted to a policy.";
+                return RedirectToAction(nameof(Quotes));
+            }
+
+            if (quote.ConvertedPolicyId is not null)
+            {
+                TempData["Error"] = "This quote has already been converted to a policy.";
+                return RedirectToAction(nameof(Quotes));
+            }
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                TempData["Error"] = "Select the client to attach this policy to.";
+                return RedirectToAction(nameof(Quotes));
+            }
+
+            var policy = new UserPolicy
+            {
+                UserId           = userId,
+                PolicyName       = quote.PlanName,
+                ProviderName     = quote.ProviderName,
+                InsuranceType    = quote.InsuranceType,
+                PolicyNumber     = policyNumber?.Trim() ?? string.Empty,
+                MonthlyPremium   = monthlyPremium,
+                StartDate        = startDate,
+                RenewalDate      = renewalDate,
+                RemindersEnabled = true
+            };
+
+            _db.UserPolicies.Add(policy);
+            await _db.SaveChangesAsync();
+
+            quote.ConvertedPolicyId = policy.Id;
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = $"\"{quote.PlanName}\" booked as an active policy for the client.";
             return RedirectToAction(nameof(Quotes));
         }
 

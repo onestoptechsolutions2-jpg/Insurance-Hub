@@ -51,6 +51,8 @@ namespace Insurance_Hub.Services
             using var scope        = _scopeFactory.CreateScope();
             var db                 = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var emailService       = scope.ServiceProvider.GetRequiredService<IEmailService>();
+            var webhooks           = scope.ServiceProvider.GetRequiredService<IWebhookDispatcher>();
+            var smsService         = scope.ServiceProvider.GetRequiredService<ISmsService>();
 
             var today = DateTime.UtcNow.Date;
 
@@ -86,6 +88,27 @@ namespace Insurance_Hub.Services
                         DaysRemaining: days,
                         MonthlyPremium: policy.MonthlyPremium
                     ));
+
+                    if (!string.IsNullOrWhiteSpace(policy.User.PhoneNumber))
+                    {
+                        await smsService.SendSmsAsync(
+                            policy.User.PhoneNumber,
+                            $"Reminder: your {policy.PolicyName} policy with {policy.ProviderName} " +
+                            $"renews in {days} days ({policy.RenewalDate:d MMM yyyy}). Reply to discuss options.");
+                    }
+
+                    await webhooks.DispatchAsync(WebhookEventType.PolicyRenewalDue, new
+                    {
+                        policyId       = policy.Id,
+                        userId         = policy.UserId,
+                        clientEmail    = policy.User.Email,
+                        policyName     = policy.PolicyName,
+                        providerName   = policy.ProviderName,
+                        insuranceType  = policy.InsuranceType,
+                        renewalDate    = policy.RenewalDate,
+                        daysRemaining  = days,
+                        monthlyPremium = policy.MonthlyPremium
+                    });
 
                     policy.LastReminderSentAt = DateTime.UtcNow;
                     _logger.LogInformation(

@@ -19,6 +19,9 @@ namespace Insurance_Hub.Data
         public DbSet<InsurancePlan> InsurancePlans => Set<InsurancePlan>();
         public DbSet<QuoteRequest> QuoteRequests => Set<QuoteRequest>();
         public DbSet<UserPolicy> UserPolicies => Set<UserPolicy>();
+        public DbSet<AppSettings> AppSettings => Set<AppSettings>();
+        public DbSet<WebhookEndpoint> WebhookEndpoints => Set<WebhookEndpoint>();
+        public DbSet<WebhookDeliveryLog> WebhookDeliveryLogs => Set<WebhookDeliveryLog>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -64,6 +67,18 @@ namespace Insurance_Hub.Data
                 entity.Property(q => q.RequestedAt).HasDefaultValueSql("now()");
                 entity.Property(q => q.Status).HasConversion<string>().HasMaxLength(20);
                 entity.Property(q => q.AdminNotes).HasMaxLength(1000);
+
+                entity.HasOne(q => q.ConvertedPolicy)
+                      .WithMany()
+                      .HasForeignKey(q => q.ConvertedPolicyId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.Property(q => q.Source).HasMaxLength(100);
+
+                entity.HasOne(q => q.Plan)
+                      .WithMany()
+                      .HasForeignKey(q => q.PlanId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             builder.Entity<UserPolicy>(entity =>
@@ -80,6 +95,44 @@ namespace Insurance_Hub.Data
                 entity.HasOne(p => p.User)
                       .WithMany()
                       .HasForeignKey(p => p.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<AppSettings>(entity =>
+            {
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.BusinessName).IsRequired().HasMaxLength(200);
+                entity.Property(s => s.AgentContactEmail).HasMaxLength(254);
+                entity.Property(s => s.CurrencySymbol).HasMaxLength(10);
+                entity.Property(s => s.SmtpHost).HasMaxLength(200);
+                entity.Property(s => s.SmtpSenderEmail).HasMaxLength(254);
+                entity.Property(s => s.SmtpSenderName).HasMaxLength(200);
+                entity.Property(s => s.SmtpSenderPassword).HasMaxLength(500);
+                entity.Property(s => s.SmtpAgentEmail).HasMaxLength(254);
+                entity.Property(s => s.AfricasTalkingUsername).HasMaxLength(200);
+                entity.Property(s => s.AfricasTalkingApiKey).HasMaxLength(500);
+                entity.Property(s => s.AfricasTalkingSenderId).HasMaxLength(50);
+                entity.Property(s => s.LeadApiKey).HasMaxLength(500);
+            });
+
+            builder.Entity<WebhookEndpoint>(entity =>
+            {
+                entity.HasKey(w => w.Id);
+                entity.Property(w => w.Url).IsRequired().HasMaxLength(500);
+                entity.Property(w => w.Secret).HasMaxLength(500);
+                entity.Property(w => w.Events).HasConversion<int>();
+                entity.Property(w => w.LastStatus).HasMaxLength(200);
+            });
+
+            builder.Entity<WebhookDeliveryLog>(entity =>
+            {
+                entity.HasKey(l => l.Id);
+                entity.Property(l => l.EventType).IsRequired().HasMaxLength(50);
+                entity.Property(l => l.ErrorMessage).HasMaxLength(1000);
+
+                entity.HasOne(l => l.WebhookEndpoint)
+                      .WithMany(w => w.DeliveryLogs)
+                      .HasForeignKey(l => l.WebhookEndpointId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
         }

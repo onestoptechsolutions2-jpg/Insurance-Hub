@@ -290,7 +290,8 @@
 
 .a-status-new       { background: #eff6ff; color: #1d4ed8; }
 .a-status-contacted { background: #fefce8; color: #a16207; }
-.a-status-closed    { background: #f0fdf4; color: #166534; }
+.a-status-sold      { background: #f0fdf4; color: #166534; }
+.a-status-lost      { background: #fef2f2; color: #b91c1c; }
 
 /* ── Role badges ─────────────────────────────────────────────────────────── */
 

@@ -1,9 +1,13 @@
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Options;
 
 namespace Insurance_Hub.Services
 {
+    /// <summary>
+    /// Env-var bootstrap shape for SMTP config (EmailSettings__* env vars). Only read once, at
+    /// first startup, by DbInitializer.SeedAppSettingsAsync to seed the AppSettings row — after
+    /// that, ISettingsService/AppSettings is the source of truth, editable via /admin/settings.
+    /// </summary>
     public class EmailSettings
     {
         public string SmtpHost      { get; set; } = string.Empty;
@@ -18,20 +22,21 @@ namespace Insurance_Hub.Services
 
     public class SmtpEmailService : IEmailService
     {
-        private readonly EmailSettings _settings;
+        private readonly ISettingsService _settings;
         private readonly ILogger<SmtpEmailService> _logger;
 
-        public SmtpEmailService(IOptions<EmailSettings> opts, ILogger<SmtpEmailService> logger)
+        public SmtpEmailService(ISettingsService settings, ILogger<SmtpEmailService> logger)
         {
-            _settings = opts.Value;
+            _settings = settings;
             _logger   = logger;
         }
 
         public async Task SendQuoteRequestToAgentAsync(QuoteEmailData data)
         {
-            var subject = $"[InsuranceHub] New Quote Request — {data.PlanName} ({data.InsuranceType})";
-            var body    = BuildAgentEmailBody(data);
-            await SendAsync(_settings.AgentEmail, subject, body);
+            var settings = await _settings.GetAsync();
+            var subject  = $"[InsuranceHub] New Quote Request — {data.PlanName} ({data.InsuranceType})";
+            var body     = BuildAgentEmailBody(data);
+            await SendAsync(settings.SmtpAgentEmail, subject, body);
         }
 
         public async Task SendQuoteConfirmationToClientAsync(QuoteEmailData data)
@@ -52,7 +57,9 @@ namespace Insurance_Hub.Services
 
         private async Task SendAsync(string to, string subject, string htmlBody)
         {
-            if (string.IsNullOrWhiteSpace(_settings.SmtpHost))
+            var settings = await _settings.GetAsync();
+
+            if (string.IsNullOrWhiteSpace(settings.SmtpHost))
             {
                 _logger.LogWarning("Email not configured — skipping send to {To}: {Subject}", to, subject);
                 return;
@@ -60,15 +67,15 @@ namespace Insurance_Hub.Services
 
             try
             {
-                using var client = new SmtpClient(_settings.SmtpHost, _settings.SmtpPort)
+                using var client = new SmtpClient(settings.SmtpHost, settings.SmtpPort)
                 {
-                    EnableSsl   = _settings.UseSsl,
-                    Credentials = new NetworkCredential(_settings.SenderEmail, _settings.SenderPassword)
+                    EnableSsl   = settings.SmtpUseSsl,
+                    Credentials = new NetworkCredential(settings.SmtpSenderEmail, settings.SmtpSenderPassword)
                 };
 
                 var message = new MailMessage
                 {
-                    From       = new MailAddress(_settings.SenderEmail, _settings.SenderName),
+                    From       = new MailAddress(settings.SmtpSenderEmail, settings.SmtpSenderName),
                     Subject    = subject,
                     Body       = htmlBody,
                     IsBodyHtml = true

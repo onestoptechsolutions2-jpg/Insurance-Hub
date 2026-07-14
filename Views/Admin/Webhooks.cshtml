@@ -1,0 +1,93 @@
+@model List<Insurance_Hub.Models.WebhookEndpoint>
+@using Insurance_Hub.Models
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Webhooks</h1>
+        <p class="a-page-sub">Send a signed POST to your own tools (Zapier, Make, n8n, a script) when key events happen.</p>
+    </div>
+</div>
+
+@if (TempData["NewWebhookSecret"] is string newSecret)
+{
+    <div class="a-form-card">
+        <div class="a-form-group a-span-2">
+            <label class="a-label">Signing secret (copy it now — shown only once)</label>
+            <input class="a-input" value="@newSecret" readonly onclick="this.select()" />
+        </div>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="a-empty">No webhook endpoints configured yet.</div>
+}
+else
+{
+    <div class="a-table-wrap">
+        <table class="a-table">
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Events</th>
+                    <th>Status</th>
+                    <th>Last triggered</th>
+                    <th>Last result</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var w in Model)
+                {
+                    <tr>
+                        <td class="a-cell-primary">@w.Url</td>
+                        <td class="a-cell-sub">@w.Events</td>
+                        <td>
+                            <span class="a-status @(w.IsActive ? "a-status-sold" : "a-status-lost")">@(w.IsActive ? "Active" : "Paused")</span>
+                        </td>
+                        <td class="a-cell-sub">@(w.LastTriggeredAt?.ToString("d MMM yyyy HH:mm") ?? "—")</td>
+                        <td class="a-cell-sub">@(w.LastStatus ?? "—")</td>
+                        <td class="a-row-actions">
+                            <form method="post" action="/admin/webhooks/@w.Id/test" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="a-btn-sm">Test</button>
+                            </form>
+                            <form method="post" action="/admin/webhooks/@w.Id/toggle" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="a-btn-sm">@(w.IsActive ? "Pause" : "Resume")</button>
+                            </form>
+                            <form method="post" action="/admin/webhooks/@w.Id/delete" style="display:inline"
+                                  onsubmit="return confirm('Remove this webhook endpoint?')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="a-btn-sm a-btn-sm-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="a-form-card">
+    <h3 class="a-modal-title">Add Webhook Endpoint</h3>
+    <form method="post" action="/admin/webhooks/create">
+        @Html.AntiForgeryToken()
+        <div class="a-form-grid">
+            <div class="a-form-group a-span-2">
+                <label class="a-label">URL</label>
+                <input class="a-input" name="url" type="url" placeholder="https://hooks.zapier.com/..." required maxlength="500" />
+            </div>
+            <div class="a-form-group a-span-2">
+                <label class="a-label">Events</label>
+                <label class="a-checkbox-label"><input type="checkbox" name="events" value="QuoteCreated" /> Quote created</label>
+                <label class="a-checkbox-label"><input type="checkbox" name="events" value="QuoteSold" /> Quote sold</label>
+                <label class="a-checkbox-label"><input type="checkbox" name="events" value="QuoteLost" /> Quote lost</label>
+                <label class="a-checkbox-label"><input type="checkbox" name="events" value="PolicyRenewalDue" /> Policy renewal due</label>
+            </div>
+        </div>
+        <div class="a-form-actions">
+            <button type="submit" class="a-btn-primary">Add Webhook</button>
+        </div>
+    </form>
+</div>

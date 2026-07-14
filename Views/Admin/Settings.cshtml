@@ -1,0 +1,150 @@
+@model Insurance_Hub.Models.AppSettings
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Settings</h1>
+        <p class="a-page-sub">Branding, email, SMS and the inbound lead API — all editable here, no redeploy needed.</p>
+    </div>
+</div>
+
+@if (TempData["NewApiKey"] is string newKey)
+{
+    <div class="a-form-card">
+        <div class="a-form-group a-span-2">
+            <label class="a-label">Your new API key (copy it now — shown only once)</label>
+            <input class="a-input" value="@newKey" readonly onclick="this.select()" />
+        </div>
+    </div>
+}
+
+<!-- Branding -->
+<div class="a-form-card">
+    <h3 class="a-modal-title">Branding</h3>
+    <form method="post" action="/admin/settings/branding">
+        @Html.AntiForgeryToken()
+        <div class="a-form-grid">
+            <div class="a-form-group a-span-2">
+                <label class="a-label">Business name</label>
+                <input class="a-input" name="businessName" value="@Model.BusinessName" required maxlength="200" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Agent contact email</label>
+                <input class="a-input" name="agentContactEmail" type="email" value="@Model.AgentContactEmail" maxlength="254" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Currency symbol</label>
+                <input class="a-input" name="currencySymbol" value="@Model.CurrencySymbol" maxlength="10" />
+            </div>
+        </div>
+        <div class="a-form-actions">
+            <button type="submit" class="a-btn-primary">Save Branding</button>
+        </div>
+    </form>
+</div>
+
+<!-- SMTP -->
+<div class="a-form-card">
+    <h3 class="a-modal-title">Email (SMTP)</h3>
+    <form method="post" action="/admin/settings/smtp">
+        @Html.AntiForgeryToken()
+        <div class="a-form-grid">
+            <div class="a-form-group a-span-2">
+                <label class="a-label">SMTP host</label>
+                <input class="a-input" name="smtpHost" value="@Model.SmtpHost" placeholder="smtp.gmail.com" maxlength="200" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">SMTP port</label>
+                <input class="a-input" name="smtpPort" type="number" value="@Model.SmtpPort" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-checkbox-label">
+                    <input type="checkbox" name="smtpUseSsl" value="true" @(Model.SmtpUseSsl ? "checked" : "") /> Use SSL
+                </label>
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Sender email</label>
+                <input class="a-input" name="smtpSenderEmail" type="email" value="@Model.SmtpSenderEmail" maxlength="254" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Sender name</label>
+                <input class="a-input" name="smtpSenderName" value="@Model.SmtpSenderName" maxlength="200" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Sender password</label>
+                <input class="a-input" name="smtpSenderPassword" type="password" placeholder="Leave blank to keep current password" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Agent inbox (receives quote requests)</label>
+                <input class="a-input" name="smtpAgentEmail" type="email" value="@Model.SmtpAgentEmail" maxlength="254" />
+            </div>
+        </div>
+        <div class="a-form-actions">
+            <button type="submit" class="a-btn-primary">Save Email Settings</button>
+        </div>
+    </form>
+    <form method="post" action="/admin/settings/test-email" style="margin-top:12px">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="a-btn-ghost">Send Test Email</button>
+    </form>
+</div>
+
+<!-- SMS -->
+<div class="a-form-card">
+    <h3 class="a-modal-title">SMS (Africa's Talking)</h3>
+    <form method="post" action="/admin/settings/sms">
+        @Html.AntiForgeryToken()
+        <div class="a-form-grid">
+            <div class="a-form-group a-span-2">
+                <label class="a-checkbox-label">
+                    <input type="checkbox" name="smsEnabled" value="true" @(Model.SmsEnabled ? "checked" : "") /> Enable SMS reminders
+                </label>
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Africa's Talking username</label>
+                <input class="a-input" name="africasTalkingUsername" value="@Model.AfricasTalkingUsername" maxlength="200" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Sender ID</label>
+                <input class="a-input" name="africasTalkingSenderId" value="@Model.AfricasTalkingSenderId" maxlength="50" />
+            </div>
+            <div class="a-form-group a-span-2">
+                <label class="a-label">API key</label>
+                <input class="a-input" name="africasTalkingApiKey" type="password" placeholder="Leave blank to keep current key" />
+            </div>
+        </div>
+        <div class="a-form-actions">
+            <button type="submit" class="a-btn-primary">Save SMS Settings</button>
+        </div>
+    </form>
+</div>
+
+<!-- Inbound Lead API -->
+<div class="a-form-card">
+    <h3 class="a-modal-title">Inbound Lead API</h3>
+    <p class="a-page-sub">
+        External sources (a landing page, a WhatsApp bot, ad platforms) can create quote requests by
+        POSTing to <code>/api/leads</code> with the header <code>X-Api-Key</code>.
+    </p>
+    <div class="a-form-group a-span-2">
+        <label class="a-label">Current key</label>
+        <div style="display:flex;gap:8px">
+            <input id="leadApiKey" class="a-input" type="password" value="@Model.LeadApiKey" readonly style="flex:1" />
+            <button type="button" class="a-btn-ghost" onclick="toggleApiKeyVisibility()">Show</button>
+        </div>
+    </div>
+    <form method="post" action="/admin/settings/regenerate-api-key" onsubmit="return confirm('This invalidates the current key immediately. Continue?');">
+        @Html.AntiForgeryToken()
+        <div class="a-form-actions">
+            <button type="submit" class="a-btn-ghost">Regenerate API Key</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    function toggleApiKeyVisibility() {
+        var input = document.getElementById('leadApiKey');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+</script>
+}

@@ -3,6 +3,7 @@ using System;
 using Insurance_Hub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Insurance_Hub.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714181545_AddAppSettings")]
+    partial class AddAppSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -308,9 +311,6 @@ namespace Insurance_Hub.Data.Migrations
                     b.Property<decimal>("MonthlyPremium")
                         .HasColumnType("numeric(10,2)");
 
-                    b.Property<int?>("PlanId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("PlanName")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -326,10 +326,6 @@ namespace Insurance_Hub.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("now()");
 
-                    b.Property<string>("Source")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -341,8 +337,6 @@ namespace Insurance_Hub.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ConvertedPolicyId");
-
-                    b.HasIndex("PlanId");
 
                     b.ToTable("QuoteRequests");
                 });
@@ -404,85 +398,6 @@ namespace Insurance_Hub.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserPolicies");
-                });
-
-            modelBuilder.Entity("Insurance_Hub.Models.WebhookDeliveryLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ErrorMessage")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("ResponseStatusCode")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("Success")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("WebhookEndpointId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WebhookEndpointId");
-
-                    b.ToTable("WebhookDeliveryLogs");
-                });
-
-            modelBuilder.Entity("Insurance_Hub.Models.WebhookEndpoint", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Events")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastStatus")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime?>("LastTriggeredAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Secret")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WebhookEndpoints");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
@@ -658,14 +573,7 @@ namespace Insurance_Hub.Data.Migrations
                         .HasForeignKey("ConvertedPolicyId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Insurance_Hub.Models.InsurancePlan", "Plan")
-                        .WithMany()
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("ConvertedPolicy");
-
-                    b.Navigation("Plan");
                 });
 
             modelBuilder.Entity("Insurance_Hub.Models.UserPolicy", b =>
@@ -677,17 +585,6 @@ namespace Insurance_Hub.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Insurance_Hub.Models.WebhookDeliveryLog", b =>
-                {
-                    b.HasOne("Insurance_Hub.Models.WebhookEndpoint", "WebhookEndpoint")
-                        .WithMany("DeliveryLogs")
-                        .HasForeignKey("WebhookEndpointId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WebhookEndpoint");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -744,11 +641,6 @@ namespace Insurance_Hub.Data.Migrations
             modelBuilder.Entity("Insurance_Hub.Models.Provider", b =>
                 {
                     b.Navigation("Plans");
-                });
-
-            modelBuilder.Entity("Insurance_Hub.Models.WebhookEndpoint", b =>
-                {
-                    b.Navigation("DeliveryLogs");
                 });
 #pragma warning restore 612, 618
         }

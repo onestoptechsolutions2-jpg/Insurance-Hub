@@ -13,15 +13,18 @@ namespace Insurance_Hub.Controllers
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailService _email;
+        private readonly IWebhookDispatcher _webhooks;
 
         public HomeController(
             ApplicationDbContext db,
             UserManager<ApplicationUser> userManager,
-            IEmailService email)
+            IEmailService email,
+            IWebhookDispatcher webhooks)
         {
             _db          = db;
             _userManager = userManager;
             _email       = email;
+            _webhooks    = webhooks;
         }
 
         // GET /  or  /?type=Motor&provider=Britam
@@ -104,6 +107,18 @@ namespace Insurance_Hub.Controllers
 
             _db.QuoteRequests.Add(quote);
             await _db.SaveChangesAsync();
+
+            await _webhooks.DispatchAsync(WebhookEventType.QuoteCreated, new
+            {
+                quoteId        = quote.Id,
+                fullName       = quote.FullName,
+                email          = quote.Email,
+                planName       = quote.PlanName,
+                providerName   = quote.ProviderName,
+                monthlyPremium = quote.MonthlyPremium,
+                insuranceType  = quote.InsuranceType,
+                requestedAt    = quote.RequestedAt
+            });
 
             // ── Fire emails (non-blocking, errors are logged not thrown) ──
             var emailData = new QuoteEmailData(

@@ -3,6 +3,7 @@ using System;
 using Insurance_Hub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Insurance_Hub.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714182232_AddWebhooks")]
+    partial class AddWebhooks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -308,9 +311,6 @@ namespace Insurance_Hub.Data.Migrations
                     b.Property<decimal>("MonthlyPremium")
                         .HasColumnType("numeric(10,2)");
 
-                    b.Property<int?>("PlanId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("PlanName")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -326,10 +326,6 @@ namespace Insurance_Hub.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("now()");
 
-                    b.Property<string>("Source")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -341,8 +337,6 @@ namespace Insurance_Hub.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ConvertedPolicyId");
-
-                    b.HasIndex("PlanId");
 
                     b.ToTable("QuoteRequests");
                 });
@@ -658,14 +652,7 @@ namespace Insurance_Hub.Data.Migrations
                         .HasForeignKey("ConvertedPolicyId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Insurance_Hub.Models.InsurancePlan", "Plan")
-                        .WithMany()
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("ConvertedPolicy");
-
-                    b.Navigation("Plan");
                 });
 
             modelBuilder.Entity("Insurance_Hub.Models.UserPolicy", b =>

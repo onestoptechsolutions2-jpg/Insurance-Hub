@@ -14,7 +14,8 @@
         <a href="/admin/quotes" class="a-filter-btn @(filter == null ? "active" : "")">All</a>
         <a href="/admin/quotes?status=New"       class="a-filter-btn @(filter == "New"       ? "active" : "")">New</a>
         <a href="/admin/quotes?status=Contacted" class="a-filter-btn @(filter == "Contacted" ? "active" : "")">Contacted</a>
-        <a href="/admin/quotes?status=Closed"    class="a-filter-btn @(filter == "Closed"    ? "active" : "")">Closed</a>
+        <a href="/admin/quotes?status=Sold"      class="a-filter-btn @(filter == "Sold"      ? "active" : "")">Sold</a>
+        <a href="/admin/quotes?status=Lost"      class="a-filter-btn @(filter == "Lost"      ? "active" : "")">Lost</a>
     </div>
 </div>
 
@@ -58,7 +59,17 @@ else
                         </td>
                         <td class="a-cell-sub">@(string.IsNullOrWhiteSpace(q.AdminNotes) ? "—" : q.AdminNotes)</td>
                         <td>
-                            <button class="a-btn-sm" onclick="openQuoteModal(@q.Id, '@q.Status', '@q.AdminNotes.Replace("'","\\'")')">Update</button>
+                            <div class="a-row-actions">
+                                <button class="a-btn-sm" onclick="openQuoteModal(@q.Id, '@q.Status', '@q.AdminNotes.Replace("'","\\'")')">Update</button>
+                                @if (q.Status == QuoteStatus.Sold && q.ConvertedPolicyId is null)
+                                {
+                                    <button class="a-btn-sm" onclick="openConvertModal(@q.Id, '@q.UserId', @q.MonthlyPremium)">Convert to Policy</button>
+                                }
+                                else if (q.ConvertedPolicyId is not null)
+                                {
+                                    <span class="a-cell-sub">Policy booked</span>
+                                }
+                            </div>
                         </td>
                     </tr>
                 }
@@ -78,7 +89,8 @@ else
                 <select name="status" id="quoteStatus" class="a-select">
                     <option value="New">New</option>
                     <option value="Contacted">Contacted</option>
-                    <option value="Closed">Closed</option>
+                    <option value="Sold">Sold</option>
+                    <option value="Lost">Lost</option>
                 </select>
             </div>
             <div class="a-form-group">
@@ -88,6 +100,46 @@ else
             <div class="a-modal-actions">
                 <button type="button" class="a-btn-ghost" onclick="closeQuoteModal()">Cancel</button>
                 <button type="submit" class="a-btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Convert-to-policy modal -->
+<div id="convertModal" class="a-modal-overlay" style="display:none">
+    <div class="a-modal">
+        <h3 class="a-modal-title">Convert to Policy</h3>
+        <form id="convertForm" method="post">
+            @Html.AntiForgeryToken()
+            <div class="a-form-group">
+                <label class="a-label">Client</label>
+                <select name="userId" id="convertUserId" class="a-select" required>
+                    <option value="">Select client…</option>
+                    @foreach (var u in (List<Insurance_Hub.Models.ApplicationUser>)ViewBag.Users)
+                    {
+                        <option value="@u.Id">@(string.IsNullOrWhiteSpace(u.DisplayName) ? u.Email : $"{u.DisplayName} ({u.Email})")</option>
+                    }
+                </select>
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Policy number</label>
+                <input type="text" name="policyNumber" class="a-input" placeholder="Optional" />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Monthly premium (KES)</label>
+                <input type="number" step="0.01" name="monthlyPremium" id="convertPremium" class="a-input" required />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Start date</label>
+                <input type="date" name="startDate" class="a-input" required />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Renewal date</label>
+                <input type="date" name="renewalDate" class="a-input" required />
+            </div>
+            <div class="a-modal-actions">
+                <button type="button" class="a-btn-ghost" onclick="closeConvertModal()">Cancel</button>
+                <button type="submit" class="a-btn-primary">Book Policy</button>
             </div>
         </form>
     </div>
@@ -106,6 +158,19 @@ else
     }
     document.getElementById('quoteModal').addEventListener('click', function(e) {
         if (e.target === this) closeQuoteModal();
+    });
+
+    function openConvertModal(id, userId, premium) {
+        document.getElementById('convertForm').action = '/admin/quotes/' + id + '/convert';
+        document.getElementById('convertUserId').value = userId;
+        document.getElementById('convertPremium').value = premium;
+        document.getElementById('convertModal').style.display = 'flex';
+    }
+    function closeConvertModal() {
+        document.getElementById('convertModal').style.display = 'none';
+    }
+    document.getElementById('convertModal').addEventListener('click', function(e) {
+        if (e.target === this) closeConvertModal();
     });
 </script>
 }

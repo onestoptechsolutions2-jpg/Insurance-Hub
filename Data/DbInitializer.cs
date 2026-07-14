@@ -1,6 +1,10 @@
+using System.Security.Cryptography;
 using Insurance_Hub.Models;
+using Insurance_Hub.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Insurance_Hub.Data
 {
@@ -663,6 +667,61 @@ namespace Insurance_Hub.Data
                 if (!await roleManager.RoleExistsAsync(role))
                     await roleManager.CreateAsync(new IdentityRole(role));
             }
+        }
+
+        public static async Task SeedAdminUserAsync(
+            UserManager<ApplicationUser> userManager,
+            IConfiguration config)
+        {
+            var email    = config["AdminSeed:Email"]    ?? "admin@insurancehub.co.ke";
+            var password = config["AdminSeed:Password"] ?? "Admin@123!";
+
+            if (await userManager.FindByEmailAsync(email) is not null)
+                return;
+
+            var user = new ApplicationUser
+            {
+                UserName       = email,
+                Email          = email,
+                EmailConfirmed = true,
+            };
+
+            var result = await userManager.CreateAsync(user, password);
+            if (result.Succeeded)
+                await userManager.AddToRoleAsync(user, "Admin");
+        }
+
+        /// <summary>
+        /// Bootstraps the singleton AppSettings row from the EmailSettings__* env vars on first
+        /// run only. After this, /admin/settings and ISettingsService are the source of truth —
+        /// existing deployments keep working unchanged, editing Settings just takes over from there.
+        /// </summary>
+        public static async Task SeedAppSettingsAsync(
+            ApplicationDbContext db,
+            IOptions<EmailSettings> emailOptions,
+            IDataProtectionProvider dataProtectionProvider)
+        {
+            if (await db.AppSettings.AnyAsync()) return;
+
+            var email     = emailOptions.Value;
+            var protector = dataProtectionProvider.CreateProtector("AppSettings.Secrets");
+
+            db.AppSettings.Add(new AppSettings
+            {
+                AgentContactEmail  = email.AgentEmail,
+                SmtpHost           = email.SmtpHost,
+                SmtpPort           = email.SmtpPort,
+                SmtpUseSsl         = email.UseSsl,
+                SmtpSenderEmail    = email.SenderEmail,
+                SmtpSenderName     = email.SenderName,
+                SmtpSenderPassword = string.IsNullOrEmpty(email.SenderPassword)
+                                        ? string.Empty
+                                        : protector.Protect(email.SenderPassword),
+                SmtpAgentEmail     = email.AgentEmail,
+                LeadApiKey         = protector.Protect(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)))
+            });
+
+            await db.SaveChangesAsync();
         }
     }
 }
