@@ -30,12 +30,14 @@ namespace Insurance_Hub.Controllers.Api
         private readonly ApplicationDbContext _db;
         private readonly IEmailService _email;
         private readonly IWebhookDispatcher _webhooks;
+        private readonly IClientService _clients;
 
-        public LeadsController(ApplicationDbContext db, IEmailService email, IWebhookDispatcher webhooks)
+        public LeadsController(ApplicationDbContext db, IEmailService email, IWebhookDispatcher webhooks, IClientService clients)
         {
             _db       = db;
             _email    = email;
             _webhooks = webhooks;
+            _clients  = clients;
         }
 
         [HttpPost("")]
@@ -48,6 +50,8 @@ namespace Insurance_Hub.Controllers.Api
             if (request.PlanId is int planId)
                 plan = await _db.InsurancePlans.Include(p => p.Provider).FirstOrDefaultAsync(p => p.Id == planId);
 
+            var client = await _clients.GetOrCreateAsync(request.FullName.Trim(), request.Email.Trim(), request.PhoneNumber);
+
             var quote = new QuoteRequest
             {
                 FullName       = request.FullName.Trim(),
@@ -59,9 +63,8 @@ namespace Insurance_Hub.Controllers.Api
                 PlanId         = plan?.Id,
                 Source         = request.Source?.Trim(),
                 RequestedAt    = DateTime.UtcNow,
-                UserId         = null,
-                Status         = QuoteStatus.New,
-                AdminNotes     = string.IsNullOrWhiteSpace(request.PhoneNumber) ? string.Empty : $"Phone: {request.PhoneNumber.Trim()}"
+                ClientId       = client.Id,
+                Status         = QuoteStatus.New
             };
 
             _db.QuoteRequests.Add(quote);

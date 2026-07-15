@@ -31,14 +31,13 @@ namespace Insurance_Hub.Controllers
         [HttpGet("quotes")]
         public async Task<IActionResult> Quotes(string? status)
         {
-            var query = _db.QuoteRequests.AsQueryable();
+            var query = _db.QuoteRequests.Include(q => q.Client).AsQueryable();
 
             if (Enum.TryParse<QuoteStatus>(status, out var parsed))
                 query = query.Where(q => q.Status == parsed);
 
             var quotes = await query.OrderByDescending(q => q.RequestedAt).ToListAsync();
             ViewBag.StatusFilter = status;
-            ViewBag.Users = await _userManager.Users.OrderBy(u => u.Email).ToListAsync();
             return View(quotes);
         }
 
@@ -78,8 +77,8 @@ namespace Insurance_Hub.Controllers
         [HttpPost("quotes/{id}/convert")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConvertQuoteToPolicy(
-            int id, string userId, string? policyNumber,
-            DateTime startDate, DateTime renewalDate, decimal monthlyPremium)
+            int id, string? policyNumber, DateTime startDate, DateTime renewalDate,
+            decimal monthlyPremium, decimal? commissionRate)
         {
             var quote = await _db.QuoteRequests.FindAsync(id);
             if (quote is null) return NotFound();
@@ -96,20 +95,15 @@ namespace Insurance_Hub.Controllers
                 return RedirectToAction(nameof(Quotes));
             }
 
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                TempData["Error"] = "Select the client to attach this policy to.";
-                return RedirectToAction(nameof(Quotes));
-            }
-
             var policy = new UserPolicy
             {
-                UserId           = userId,
+                ClientId         = quote.ClientId,
                 PolicyName       = quote.PlanName,
                 ProviderName     = quote.ProviderName,
                 InsuranceType    = quote.InsuranceType,
                 PolicyNumber     = policyNumber?.Trim() ?? string.Empty,
                 MonthlyPremium   = monthlyPremium,
+                CommissionRate   = commissionRate,
                 StartDate        = startDate,
                 RenewalDate      = renewalDate,
                 RemindersEnabled = true

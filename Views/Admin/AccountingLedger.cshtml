@@ -1,0 +1,51 @@
+@model List<Insurance_Hub.Models.Transaction>
+@using Insurance_Hub.Models
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Transaction Ledger</h1>
+        <p class="a-page-sub">@Model.Count transaction(s)</p>
+    </div>
+    <a href="/admin/accounting" class="a-btn-ghost">← Back to Accounting</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="a-empty">No transactions recorded yet.</div>
+}
+else
+{
+    <div class="a-table-wrap">
+        <table class="a-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Policy</th>
+                    <th>Type</th>
+                    <th>Period</th>
+                    <th>Amount</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td class="a-cell-sub">@t.RecordedAt.ToString("d MMM yyyy")</td>
+                        <td>@t.Client?.FullName</td>
+                        <td>@t.Policy?.PolicyName</td>
+                        <td>
+                            <span class="a-status @(t.Type == TransactionType.CommissionReceived ? "a-status-sold" : "a-status-new")">
+                                @(t.Type == TransactionType.CommissionReceived ? "Commission" : "Premium")
+                            </span>
+                        </td>
+                        <td class="a-cell-sub">@t.PeriodMonth</td>
+                        <td>KES @t.Amount.ToString("N0")</td>
+                        <td class="a-cell-sub">@(string.IsNullOrWhiteSpace(t.Notes) ? "—" : t.Notes)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

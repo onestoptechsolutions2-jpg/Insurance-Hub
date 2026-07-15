@@ -1,0 +1,177 @@
+@model List<Insurance_Hub.Models.InsurancePlan>
+@using Insurance_Hub.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+
+@{
+    var insuranceType = (InsuranceType)ViewBag.InsuranceType;
+    var reasons        = ViewBag.Reasons as Dictionary<int, string> ?? new();
+
+    var typeMap = new Dictionary<string,string>
+    {
+        ["Life"] = "#e11d48", ["Health"] = "#059669", ["Motor"] = "#2563eb", ["Home"] = "#ea580c",
+        ["Travel"] = "#7c3aed", ["Business"] = "#0891b2", ["Agriculture"] = "#16a34a", ["Micro"] = "#0d9488",
+    };
+    string TypeColor(string t) => typeMap.TryGetValue(t, out var v) ? v : "#635bff";
+}
+
+@* ── Toasts ──────────────────────────────────────────────────────────────── *@
+@if (TempData["QuoteSuccess"] is string ok)
+{
+    <div class="s-toast s-toast-success" id="toast">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>@ok</span>
+        <button class="s-toast-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+@if (TempData["QuoteError"] is string err)
+{
+    <div class="s-toast s-toast-error" id="toast-err">
+        <span>@err</span>
+        <button class="s-toast-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+
+<div class="stripe-page" style="padding-top:56px">
+
+    <div class="guide-header" style="margin-bottom:36px">
+        <div class="stripe-hero-eyebrow" style="margin:0 auto 14px">
+            <span class="eyebrow-dot"></span>
+            Your guide's picks
+        </div>
+        <h1 class="guide-title">Here's what I'd recommend.</h1>
+        <p class="guide-sub">Based on what you told me, these are the best @insuranceType.ToString().ToLower() options for you.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="stripe-empty">
+            <div class="empty-icon">🔍</div>
+            <p>I couldn't find a plan matching that combination just yet.</p>
+            <a href="/Home/Guide" class="stripe-link">Try the guide again →</a>
+        </div>
+    }
+    else
+    {
+        <div class="stripe-grid">
+            @foreach (var plan in Model)
+            {
+                var stars       = (int)Math.Round(plan.Rating);
+                var topFeatures = plan.FeatureList.Take(3).ToList();
+                var typeColor   = TypeColor(plan.Type.ToString());
+
+                <div class="stripe-card insurance-plan" style="--card-accent:@typeColor">
+
+                    <div class="card-shimmer"></div>
+                    <div class="card-accent-bar"></div>
+
+                    @if (plan.IsPopular)
+                    {
+                        <div class="stripe-card-ribbon">⭐ Most Popular</div>
+                    }
+
+                    <div class="stripe-card-head">
+                        <span class="stripe-card-provider">@plan.Provider?.Name</span>
+                        <span class="stripe-card-type" style="color:@typeColor;background:@typeColor+18">@plan.Type</span>
+                    </div>
+
+                    <h3 class="stripe-card-name">@plan.PlanName</h3>
+
+                    <div class="stripe-stars">
+                        @for (int i = 1; i <= 5; i++)
+                        { <span class="@(i <= stars ? "s-star-on" : "s-star-off")">★</span> }
+                        <span class="s-rating">@plan.Rating.ToString("0.0")</span>
+                    </div>
+
+                    @if (reasons.TryGetValue(plan.Id, out var reason))
+                    {
+                        <div class="guide-reason">💡 @reason</div>
+                    }
+
+                    <div class="stripe-price-block">
+                        <span class="stripe-currency">KES</span>
+                        <span class="stripe-amount">@plan.MonthlyPremium.ToString("N0")</span>
+                        <span class="stripe-period">/mo</span>
+                    </div>
+
+                    <div class="stripe-coverage">
+                        @(plan.CoverageLimit > 0 ? $"Cover up to KES {plan.CoverageLimit:N0}" : "Unlimited cover")
+                    </div>
+
+                    <div class="card-divider"></div>
+
+                    <ul class="stripe-features">
+                        @foreach (var f in topFeatures)
+                        {
+                            <li>
+                                <svg class="feat-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                @f
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="stripe-card-actions">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <button class="stripe-btn-primary quote-btn"
+                                    data-plan-id="@plan.Id" data-plan="@plan.PlanName" data-provider="@plan.Provider?.Name"
+                                    data-premium="@plan.MonthlyPremium" data-type="@plan.Type" data-tier="@plan.Tier"
+                                    data-coverage="@plan.CoverageLimit" data-features="@plan.Features">
+                                Get Quote
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </button>
+                        }
+                        else
+                        {
+                            <a href="/Identity/Account/Login" class="stripe-btn-primary">
+                                Get Quote
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </a>
+                        }
+                        <a href="@Url.Action("Details","Home", new { id = plan.Id })" class="stripe-btn-ghost">View details</a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div style="text-align:center;margin-top:36px;display:flex;gap:20px;justify-content:center">
+        <a href="@Url.Action("Index","Home", new { type = insuranceType })" class="stripe-link">See all @insuranceType.ToString().ToLower() plans →</a>
+        <a href="/Home/Guide" class="stripe-btn-ghost">Retake the guide</a>
+    </div>
+
+</div>
+
+@* ── Quote modal ─────────────────────────────────────────────────────────── *@
+<div id="quoteModal" class="modal">
+    <div class="modal-content">
+        <span id="closeForm" class="close">&times;</span>
+        <div class="modal-plan-badge" id="modalBadge"></div>
+        <h2 style="margin:8px 0 4px;font-size:22px;">Get a Quote</h2>
+        <p class="modal-plan-name" id="selectedPlan"></p>
+        <p class="modal-provider"  id="modalProvider"></p>
+        <p class="modal-price"     id="modalPrice"></p>
+        <form id="quoteForm" asp-action="RequestQuote" asp-controller="Home" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="planId"         id="hiddenPlanId" />
+            <input type="hidden" name="planName"       id="hiddenPlanName" />
+            <input type="hidden" name="planTier"       id="hiddenTier" />
+            <input type="hidden" name="providerName"   id="hiddenProvider" />
+            <input type="hidden" name="monthlyPremium" id="hiddenPremium" />
+            <input type="hidden" name="coverageLimit"  id="hiddenCoverage" />
+            <input type="hidden" name="insuranceType"  id="hiddenType" />
+            <input type="hidden" name="features"       id="hiddenFeatures" />
+            <div class="modal-field">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="fullName" placeholder="Jane Wanjiku" required/>
+            </div>
+            <div class="modal-field">
+                <label for="emailInput">Email Address</label>
+                <input type="email" id="emailInput" name="email" placeholder="jane@example.com" required/>
+            </div>
+            <button type="submit" class="stripe-btn-primary full" style="margin-top:8px;">
+                Send Quote Request →
+            </button>
+        </form>
+    </div>
+</div>

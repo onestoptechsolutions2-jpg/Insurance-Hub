@@ -1,0 +1,126 @@
+@model Insurance_Hub.Models.Client
+@using Insurance_Hub.Models
+
+@{
+    var quotes = ViewBag.Quotes as List<QuoteRequest> ?? new();
+    var policies = ViewBag.Policies as List<UserPolicy> ?? new();
+    var transactions = ViewBag.Transactions as List<Transaction> ?? new();
+}
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">@Model.FullName</h1>
+        <p class="a-page-sub">@Model.Email @(string.IsNullOrWhiteSpace(Model.Phone) ? "" : $"· {Model.Phone}") · Client since @Model.CreatedAt.ToString("d MMM yyyy")</p>
+    </div>
+    <a href="/admin/clients" class="a-btn-ghost">← Back to Clients</a>
+</div>
+
+<div class="a-stats-row">
+    <div class="a-stat-tile">
+        <div class="a-stat-label">Quotes</div>
+        <div class="a-stat-value">@quotes.Count</div>
+    </div>
+    <div class="a-stat-tile">
+        <div class="a-stat-label">Active Policies</div>
+        <div class="a-stat-value">@policies.Count</div>
+    </div>
+    <div class="a-stat-tile">
+        <div class="a-stat-label">Total Recorded</div>
+        <div class="a-stat-value">KES @transactions.Sum(t => t.Amount).ToString("N0")</div>
+    </div>
+</div>
+
+<div class="a-form-card">
+    <h3 class="a-modal-title">Notes</h3>
+    <form method="post" action="/admin/clients/@Model.Id/notes">
+        @Html.AntiForgeryToken()
+        <textarea name="notes" class="a-textarea" rows="4" placeholder="Internal notes about this client…">@Model.Notes</textarea>
+        <div class="a-form-actions">
+            <button type="submit" class="a-btn-primary">Save Notes</button>
+        </div>
+    </form>
+</div>
+
+<h3 class="a-page-title" style="font-size:18px;margin:28px 0 12px">Policies</h3>
+@if (!policies.Any())
+{
+    <div class="a-empty">No policies yet.</div>
+}
+else
+{
+    <div class="a-table-wrap">
+        <table class="a-table">
+            <thead>
+                <tr><th>Policy</th><th>Provider</th><th>Premium</th><th>Commission</th><th>Renewal</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in policies)
+                {
+                    <tr>
+                        <td class="a-cell-primary">@p.PolicyName</td>
+                        <td>@p.ProviderName</td>
+                        <td>KES @p.MonthlyPremium.ToString("N0")/mo</td>
+                        <td>@(p.CommissionRate is null ? "—" : $"{p.CommissionRate}%")</td>
+                        <td class="a-cell-sub">@p.RenewalDate.ToString("d MMM yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h3 class="a-page-title" style="font-size:18px;margin:28px 0 12px">Quotes</h3>
+@if (!quotes.Any())
+{
+    <div class="a-empty">No quotes yet.</div>
+}
+else
+{
+    <div class="a-table-wrap">
+        <table class="a-table">
+            <thead>
+                <tr><th>Plan</th><th>Provider</th><th>Premium</th><th>Status</th><th>Date</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var q in quotes)
+                {
+                    <tr>
+                        <td class="a-cell-primary">@q.PlanName</td>
+                        <td>@q.ProviderName</td>
+                        <td>KES @q.MonthlyPremium.ToString("N0")/mo</td>
+                        <td><span class="a-status a-status-@q.Status.ToString().ToLower()">@q.Status</span></td>
+                        <td class="a-cell-sub">@q.RequestedAt.ToString("d MMM yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h3 class="a-page-title" style="font-size:18px;margin:28px 0 12px">Transactions</h3>
+@if (!transactions.Any())
+{
+    <div class="a-empty">No transactions recorded yet.</div>
+}
+else
+{
+    <div class="a-table-wrap">
+        <table class="a-table">
+            <thead>
+                <tr><th>Date</th><th>Type</th><th>Period</th><th>Amount</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var t in transactions)
+                {
+                    <tr>
+                        <td class="a-cell-sub">@t.RecordedAt.ToString("d MMM yyyy")</td>
+                        <td>@(t.Type == TransactionType.CommissionReceived ? "Commission" : "Premium")</td>
+                        <td class="a-cell-sub">@t.PeriodMonth</td>
+                        <td>KES @t.Amount.ToString("N0")</td>
+                        <td class="a-cell-sub">@(string.IsNullOrWhiteSpace(t.Notes) ? "—" : t.Notes)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

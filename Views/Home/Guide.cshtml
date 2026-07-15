@@ -1,0 +1,128 @@
+@{
+    var typeMap = new Dictionary<string,(string color,string icon,string label)>
+    {
+        ["Life"]        = ("#e11d48","❤️","Life"),
+        ["Health"]      = ("#059669","🏥","Health"),
+        ["Motor"]       = ("#2563eb","🚗","Motor"),
+        ["Home"]        = ("#ea580c","🏠","Home"),
+        ["Travel"]      = ("#7c3aed","✈️","Travel"),
+        ["Business"]    = ("#0891b2","💼","Business"),
+        ["Agriculture"] = ("#16a34a","🌾","Agriculture"),
+        ["Micro"]       = ("#0d9488","🤝","Micro"),
+    };
+}
+
+<div class="guide-shell">
+    <div class="guide-header">
+        <div class="stripe-hero-eyebrow" style="margin:0 auto 14px">
+            <span class="eyebrow-dot"></span>
+            Your 60-second guide
+        </div>
+        <h1 class="guide-title">Let's find your perfect cover.</h1>
+        <p class="guide-sub">Answer three quick questions and I'll pick the best options for you — no need to browse everything yourself.</p>
+    </div>
+
+    <div class="guide-progress">
+        <span class="guide-dot active" data-dot="1"></span>
+        <span class="guide-dot" data-dot="2"></span>
+        <span class="guide-dot" data-dot="3"></span>
+    </div>
+
+    <div class="guide-card">
+
+        @* ── Step 1 ─────────────────────────────────────────────────────────── *@
+        <div class="guide-step" data-step="1">
+            <h2 class="guide-step-title">What would you like to insure?</h2>
+            <div class="guide-choice-grid guide-choice-grid-types">
+                @foreach (var kv in typeMap)
+                {
+                    <button type="button" class="guide-choice" data-field="type" data-value="@kv.Key" style="--choice-color:@kv.Value.color">
+                        <span class="guide-choice-icon">@kv.Value.icon</span>
+                        <span>@kv.Value.label</span>
+                    </button>
+                }
+            </div>
+        </div>
+
+        @* ── Step 2 ─────────────────────────────────────────────────────────── *@
+        <div class="guide-step" data-step="2" style="display:none">
+            <h2 class="guide-step-title">What matters most right now?</h2>
+            <div class="guide-choice-grid guide-choice-grid-stacked">
+                <button type="button" class="guide-choice guide-choice-wide" data-field="budget" data-value="Budget">
+                    <strong>Budget-friendly</strong>
+                    <span>Keep the monthly cost as low as possible</span>
+                </button>
+                <button type="button" class="guide-choice guide-choice-wide" data-field="budget" data-value="Balanced">
+                    <strong>Balanced coverage &amp; price</strong>
+                    <span>A good mix — not the cheapest, not the priciest</span>
+                </button>
+                <button type="button" class="guide-choice guide-choice-wide" data-field="budget" data-value="Best">
+                    <strong>Best possible coverage</strong>
+                    <span>Price is less important than comprehensive cover</span>
+                </button>
+            </div>
+            <button type="button" class="guide-back" data-back>← Back</button>
+        </div>
+
+        @* ── Step 3 ─────────────────────────────────────────────────────────── *@
+        <div class="guide-step" data-step="3" style="display:none">
+            <h2 class="guide-step-title">Anything else guiding your choice?</h2>
+            <div class="guide-choice-grid guide-choice-grid-stacked">
+                <button type="button" class="guide-choice guide-choice-wide" data-field="priority" data-value="Price">
+                    <strong>Lowest price</strong>
+                    <span>Show me the most affordable fit first</span>
+                </button>
+                <button type="button" class="guide-choice guide-choice-wide" data-field="priority" data-value="Rating">
+                    <strong>Highest rated</strong>
+                    <span>Show me the best-reviewed option first</span>
+                </button>
+                <button type="button" class="guide-choice guide-choice-wide" data-field="priority" data-value="Popular">
+                    <strong>Most popular with other customers</strong>
+                    <span>Show me what others like me tend to pick</span>
+                </button>
+            </div>
+            <button type="button" class="guide-back" data-back>← Back</button>
+        </div>
+
+    </div>
+
+    <a href="/" class="stripe-btn-ghost" style="margin-top:18px">Skip the guide — browse all plans instead</a>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        const answers = { type: null, budget: null, priority: null };
+        let step = 1;
+
+        function showStep(n) {
+            document.querySelectorAll('.guide-step').forEach(el => {
+                el.style.display = el.dataset.step == n ? '' : 'none';
+            });
+            document.querySelectorAll('.guide-dot').forEach(el => {
+                el.classList.toggle('active', el.dataset.dot <= n);
+            });
+            step = n;
+        }
+
+        document.querySelectorAll('.guide-choice').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const field = btn.dataset.field;
+                answers[field] = btn.dataset.value;
+
+                if (field === 'priority') {
+                    const params = new URLSearchParams(answers);
+                    window.location.href = '/Home/Recommend?' + params.toString();
+                    return;
+                }
+
+                showStep(step + 1);
+            });
+        });
+
+        document.querySelectorAll('[data-back]').forEach(btn => {
+            btn.addEventListener('click', () => showStep(step - 1));
+        });
+    })();
+</script>
+}

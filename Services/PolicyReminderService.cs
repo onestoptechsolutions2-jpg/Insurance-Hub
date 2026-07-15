@@ -64,7 +64,7 @@ namespace Insurance_Hub.Services
                 var targetDate = today.AddDays(days);
 
                 var duePolicies = await db.UserPolicies
-                    .Include(p => p.User)
+                    .Include(p => p.Client)
                     .Where(p =>
                         p.RemindersEnabled &&
                         p.RenewalDate.Date == targetDate &&
@@ -74,13 +74,13 @@ namespace Insurance_Hub.Services
 
                 foreach (var policy in duePolicies)
                 {
-                    if (policy.User?.Email is null) continue;
+                    if (policy.Client?.Email is null) continue;
 
                     await emailService.SendPolicyReminderAsync(new PolicyReminderData(
-                        ClientName:    policy.User.DisplayName.Length > 0
-                                           ? policy.User.DisplayName
-                                           : policy.User.Email,
-                        ClientEmail:   policy.User.Email,
+                        ClientName:    policy.Client.FullName.Length > 0
+                                           ? policy.Client.FullName
+                                           : policy.Client.Email,
+                        ClientEmail:   policy.Client.Email,
                         PolicyName:    policy.PolicyName,
                         ProviderName:  policy.ProviderName,
                         InsuranceType: policy.InsuranceType,
@@ -89,10 +89,10 @@ namespace Insurance_Hub.Services
                         MonthlyPremium: policy.MonthlyPremium
                     ));
 
-                    if (!string.IsNullOrWhiteSpace(policy.User.PhoneNumber))
+                    if (!string.IsNullOrWhiteSpace(policy.Client.Phone))
                     {
                         await smsService.SendSmsAsync(
-                            policy.User.PhoneNumber,
+                            policy.Client.Phone,
                             $"Reminder: your {policy.PolicyName} policy with {policy.ProviderName} " +
                             $"renews in {days} days ({policy.RenewalDate:d MMM yyyy}). Reply to discuss options.");
                     }
@@ -100,8 +100,8 @@ namespace Insurance_Hub.Services
                     await webhooks.DispatchAsync(WebhookEventType.PolicyRenewalDue, new
                     {
                         policyId       = policy.Id,
-                        userId         = policy.UserId,
-                        clientEmail    = policy.User.Email,
+                        clientId       = policy.ClientId,
+                        clientEmail    = policy.Client.Email,
                         policyName     = policy.PolicyName,
                         providerName   = policy.ProviderName,
                         insuranceType  = policy.InsuranceType,
@@ -113,7 +113,7 @@ namespace Insurance_Hub.Services
                     policy.LastReminderSentAt = DateTime.UtcNow;
                     _logger.LogInformation(
                         "Reminder sent: {PolicyName} for {Email} ({Days} days)",
-                        policy.PolicyName, policy.User.Email, days);
+                        policy.PolicyName, policy.Client.Email, days);
                 }
 
                 if (duePolicies.Count > 0)

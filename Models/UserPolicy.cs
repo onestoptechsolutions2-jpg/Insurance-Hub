@@ -10,8 +10,7 @@ namespace Insurance_Hub.Models
     {
         public int Id { get; set; }
 
-        [Required]
-        public string UserId { get; set; } = string.Empty;
+        public int ClientId { get; set; }
 
         [Required, MaxLength(200)]
         public string PolicyName { get; set; } = string.Empty;
@@ -27,6 +26,9 @@ namespace Insurance_Hub.Models
 
         public decimal MonthlyPremium { get; set; }
 
+        /// <summary>Commission percentage the broker earns on this policy's monthly premium — entered manually at conversion, since rates vary by deal/provider.</summary>
+        public decimal? CommissionRate { get; set; }
+
         public DateTime StartDate { get; set; }
 
         public DateTime RenewalDate { get; set; }
@@ -40,6 +42,6 @@ namespace Insurance_Hub.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
-        public ApplicationUser? User { get; set; }
+        public Client? Client { get; set; }
     }
 }

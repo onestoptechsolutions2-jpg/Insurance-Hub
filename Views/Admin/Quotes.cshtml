@@ -63,7 +63,7 @@ else
                                 <button class="a-btn-sm" onclick="openQuoteModal(@q.Id, '@q.Status', '@q.AdminNotes.Replace("'","\\'")')">Update</button>
                                 @if (q.Status == QuoteStatus.Sold && q.ConvertedPolicyId is null)
                                 {
-                                    <button class="a-btn-sm" onclick="openConvertModal(@q.Id, '@q.UserId', @q.MonthlyPremium)">Convert to Policy</button>
+                                    <button class="a-btn-sm" onclick="openConvertModal(@q.Id, '@((q.Client?.FullName ?? q.FullName).Replace("'", "\\'"))', @q.MonthlyPremium)">Convert to Policy</button>
                                 }
                                 else if (q.ConvertedPolicyId is not null)
                                 {
@@ -113,13 +113,7 @@ else
             @Html.AntiForgeryToken()
             <div class="a-form-group">
                 <label class="a-label">Client</label>
-                <select name="userId" id="convertUserId" class="a-select" required>
-                    <option value="">Select client…</option>
-                    @foreach (var u in (List<Insurance_Hub.Models.ApplicationUser>)ViewBag.Users)
-                    {
-                        <option value="@u.Id">@(string.IsNullOrWhiteSpace(u.DisplayName) ? u.Email : $"{u.DisplayName} ({u.Email})")</option>
-                    }
-                </select>
+                <div class="a-input" id="convertClientName" style="background:#f8fafc"></div>
             </div>
             <div class="a-form-group">
                 <label class="a-label">Policy number</label>
@@ -128,6 +122,10 @@ else
             <div class="a-form-group">
                 <label class="a-label">Monthly premium (KES)</label>
                 <input type="number" step="0.01" name="monthlyPremium" id="convertPremium" class="a-input" required />
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Commission rate (%)</label>
+                <input type="number" step="0.1" min="0" max="100" name="commissionRate" class="a-input" placeholder="Optional" />
             </div>
             <div class="a-form-group">
                 <label class="a-label">Start date</label>
@@ -160,9 +158,9 @@ else
         if (e.target === this) closeQuoteModal();
     });
 
-    function openConvertModal(id, userId, premium) {
+    function openConvertModal(id, clientName, premium) {
         document.getElementById('convertForm').action = '/admin/quotes/' + id + '/convert';
-        document.getElementById('convertUserId').value = userId;
+        document.getElementById('convertClientName').textContent = clientName;
         document.getElementById('convertPremium').value = premium;
         document.getElementById('convertModal').style.display = 'flex';
     }

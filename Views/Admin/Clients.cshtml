@@ -1,0 +1,58 @@
+@model List<Insurance_Hub.Models.Client>
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Clients</h1>
+        <p class="a-page-sub">@Model.Count client(s)</p>
+    </div>
+    <form method="get" style="display:flex;gap:8px">
+        <input type="text" name="search" class="a-input" placeholder="Search name or email…" value="@(ViewBag.Search as string)" />
+        <button type="submit" class="a-btn-ghost">Search</button>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="a-empty">No clients found.</div>
+}
+else
+{
+    <div class="a-table-wrap">
+        <table class="a-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Site login</th>
+                    <th>Added</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td class="a-cell-primary">@c.FullName</td>
+                        <td class="a-cell-sub">@c.Email</td>
+                        <td class="a-cell-sub">@(string.IsNullOrWhiteSpace(c.Phone) ? "—" : c.Phone)</td>
+                        <td>
+                            @if (c.UserId is not null)
+                            {
+                                <span class="a-role-badge a-role-user">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="a-cell-sub">—</span>
+                            }
+                        </td>
+                        <td class="a-cell-sub">@c.CreatedAt.ToString("d MMM yyyy")</td>
+                        <td class="a-row-actions">
+                            <a href="/admin/clients/@c.Id" class="a-btn-sm">View</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

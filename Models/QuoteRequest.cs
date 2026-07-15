@@ -32,8 +32,9 @@ namespace Insurance_Hub.Models
 
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
 
-        // Optional: link to Identity user if logged in
-        public string? UserId { get; set; }
+        /// <summary>The CRM contact this quote belongs to — set for every quote, regardless of source.</summary>
+        public int ClientId { get; set; }
+        public Client? Client { get; set; }
 
         public QuoteStatus Status { get; set; } = QuoteStatus.New;
 

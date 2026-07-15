@@ -1574,3 +1574,155 @@ a { color: inherit; text-decoration: none; }
     .profile-shell { padding: 24px 16px 60px; }
 }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GUIDE WIZARD — guided intake, recommendation flow
+═══════════════════════════════════════════════════════════════════════════ */
+
+.guide-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px auto 0;
+    padding: 9px 20px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--amber-dark);
+    background: var(--amber-pale);
+    border: 1.5px solid rgba(245,158,11,.3);
+    border-radius: var(--r-full);
+    transition: background .15s, border-color .15s, transform .1s;
+}
+.guide-cta:hover {
+    background: var(--amber-light);
+    border-color: var(--amber);
+    color: var(--ink);
+    transform: translateY(-1px);
+}
+
+.guide-shell {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 64px 20px 80px;
+    text-align: center;
+}
+.guide-header { margin-bottom: 28px; }
+.guide-title {
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -.02em;
+    margin-bottom: 12px;
+}
+.guide-sub {
+    font-size: 15.5px;
+    color: var(--muted);
+    max-width: 460px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.guide-progress {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+.guide-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background .2s, transform .2s;
+}
+.guide-dot.active { background: var(--amber); transform: scale(1.3); }
+
+.guide-card {
+    background: var(--white);
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--r-xl);
+    padding: 40px 32px;
+    box-shadow: var(--sh-lg);
+    text-align: left;
+}
+.guide-step-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 22px;
+    text-align: center;
+}
+
+.guide-choice-grid { display: grid; gap: 12px; }
+.guide-choice-grid-types { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.guide-choice-grid-stacked { grid-template-columns: 1fr; }
+
+.guide-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 18px 14px;
+    background: var(--bg-warm);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-md);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--body);
+    cursor: pointer;
+    transition: border-color .15s, background .15s, transform .1s, box-shadow .15s;
+}
+.guide-choice:hover {
+    border-color: var(--choice-color, var(--amber));
+    background: color-mix(in srgb, var(--choice-color, var(--amber)) 8%, white);
+    color: var(--choice-color, var(--amber-dark));
+    transform: translateY(-2px);
+    box-shadow: var(--sh-sm);
+}
+.guide-choice-icon { font-size: 26px; }
+
+.guide-choice-wide {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    gap: 3px;
+    padding: 18px 20px;
+}
+.guide-choice-wide strong { font-size: 15px; color: var(--ink); }
+.guide-choice-wide span { font-size: 13px; font-weight: 400; color: var(--muted); }
+.guide-choice-wide:hover strong { color: var(--amber-dark); }
+/* stacked layout: strong on its own line, span below */
+.guide-choice-grid-stacked .guide-choice-wide { flex-direction: column; align-items: flex-start; }
+
+.guide-back {
+    display: block;
+    margin-top: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color .15s;
+}
+.guide-back:hover { color: var(--amber-dark); }
+
+.guide-reason {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--purple);
+    background: var(--purple-pale);
+    border-radius: var(--r-sm);
+    padding: 8px 12px;
+    margin: 10px 0 4px;
+}
+
+@media (max-width: 640px) {
+    .guide-shell { padding: 40px 16px 60px; }
+    .guide-card { padding: 28px 20px; }
+    .guide-choice-grid-types { grid-template-columns: repeat(3, 1fr); }
+}

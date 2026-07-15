@@ -293,6 +293,37 @@
 .a-status-sold      { background: #f0fdf4; color: #166534; }
 .a-status-lost      { background: #fef2f2; color: #b91c1c; }
 
+/* ── Stat tiles ──────────────────────────────────────────────────────────── */
+
+.a-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.a-stat-tile {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 18px 20px;
+}
+
+.a-stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.a-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
 /* ── Role badges ─────────────────────────────────────────────────────────── */
 
 .a-role-badge {

@@ -1,5 +1,6 @@
 using Insurance_Hub.Data;
 using Insurance_Hub.Models;
+using Insurance_Hub.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,12 +14,19 @@ namespace Insurance_Hub.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IClientService _clients;
 
-        public ProfileController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public ProfileController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IClientService clients)
         {
             _db          = db;
             _userManager = userManager;
+            _clients     = clients;
         }
+
+        private Task<Client> GetClientAsync(ApplicationUser user) =>
+            _clients.GetOrCreateAsync(
+                string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email! : user.DisplayName,
+                user.Email!, user.PhoneNumber, user.Id);
 
         // GET /profile
         [HttpGet("")]
@@ -26,14 +34,15 @@ namespace Insurance_Hub.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             if (user is null) return Challenge();
+            var client = await GetClientAsync(user);
 
             ViewBag.Quotes = await _db.QuoteRequests
-                .Where(q => q.UserId == user.Id)
+                .Where(q => q.ClientId == client.Id)
                 .OrderByDescending(q => q.RequestedAt)
                 .ToListAsync();
 
             ViewBag.Policies = await _db.UserPolicies
-                .Where(p => p.UserId == user.Id)
+                .Where(p => p.ClientId == client.Id)
                 .OrderBy(p => p.RenewalDate)
                 .ToListAsync();
 
@@ -66,6 +75,7 @@ namespace Insurance_Hub.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             if (user is null) return Challenge();
+            var client = await GetClientAsync(user);
 
             if (string.IsNullOrWhiteSpace(policyName) || string.IsNullOrWhiteSpace(providerName))
             {
@@ -75,7 +85,7 @@ namespace Insurance_Hub.Controllers
 
             _db.UserPolicies.Add(new UserPolicy
             {
-                UserId           = user.Id,
+                ClientId         = client.Id,
                 PolicyName       = policyName.Trim(),
                 ProviderName     = providerName.Trim(),
                 InsuranceType    = insuranceType,
@@ -98,9 +108,10 @@ namespace Insurance_Hub.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             if (user is null) return Challenge();
+            var client = await GetClientAsync(user);
 
             var policy = await _db.UserPolicies
-                .FirstOrDefaultAsync(p => p.Id == id && p.UserId == user.Id);
+                .FirstOrDefaultAsync(p => p.Id == id && p.ClientId == client.Id);
 
             if (policy is not null)
             {
@@ -119,9 +130,10 @@ namespace Insurance_Hub.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             if (user is null) return Challenge();
+            var client = await GetClientAsync(user);
 
             var policy = await _db.UserPolicies
-                .FirstOrDefaultAsync(p => p.Id == id && p.UserId == user.Id);
+                .FirstOrDefaultAsync(p => p.Id == id && p.ClientId == client.Id);
 
             if (policy is not null)
             {

@@ -55,6 +55,7 @@ builder.Services.AddDataProtection()
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddHostedService<PolicyReminderService>();
 
 // ── Outbound webhooks ───────────────────────────────────────────────────────

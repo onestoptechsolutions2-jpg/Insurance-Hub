@@ -17,11 +17,13 @@ namespace Insurance_Hub.Data
 
         public DbSet<Provider> Providers => Set<Provider>();
         public DbSet<InsurancePlan> InsurancePlans => Set<InsurancePlan>();
+        public DbSet<Client> Clients => Set<Client>();
         public DbSet<QuoteRequest> QuoteRequests => Set<QuoteRequest>();
         public DbSet<UserPolicy> UserPolicies => Set<UserPolicy>();
         public DbSet<AppSettings> AppSettings => Set<AppSettings>();
         public DbSet<WebhookEndpoint> WebhookEndpoints => Set<WebhookEndpoint>();
         public DbSet<WebhookDeliveryLog> WebhookDeliveryLogs => Set<WebhookDeliveryLog>();
+        public DbSet<Transaction> Transactions => Set<Transaction>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -55,6 +57,21 @@ namespace Insurance_Hub.Data
                 entity.Property(p => p.Description).HasMaxLength(1000);
             });
 
+            builder.Entity<Client>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.FullName).IsRequired().HasMaxLength(200);
+                entity.Property(c => c.Email).IsRequired().HasMaxLength(254);
+                entity.Property(c => c.Phone).HasMaxLength(30);
+                entity.Property(c => c.Notes).HasMaxLength(1000);
+                entity.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
+
+                entity.HasOne(c => c.User)
+                      .WithMany()
+                      .HasForeignKey(c => c.UserId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
             builder.Entity<QuoteRequest>(entity =>
             {
                 entity.HasKey(q => q.Id);
@@ -79,23 +96,28 @@ namespace Insurance_Hub.Data
                       .WithMany()
                       .HasForeignKey(q => q.PlanId)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(q => q.Client)
+                      .WithMany(c => c.Quotes)
+                      .HasForeignKey(q => q.ClientId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<UserPolicy>(entity =>
             {
                 entity.HasKey(p => p.Id);
-                entity.Property(p => p.UserId).IsRequired();
                 entity.Property(p => p.PolicyName).IsRequired().HasMaxLength(200);
                 entity.Property(p => p.ProviderName).IsRequired().HasMaxLength(200);
                 entity.Property(p => p.InsuranceType).HasMaxLength(50);
                 entity.Property(p => p.PolicyNumber).HasMaxLength(100);
                 entity.Property(p => p.MonthlyPremium).HasColumnType("numeric(10,2)");
+                entity.Property(p => p.CommissionRate).HasColumnType("numeric(5,2)");
                 entity.Property(p => p.CreatedAt).HasDefaultValueSql("now()");
 
-                entity.HasOne(p => p.User)
-                      .WithMany()
-                      .HasForeignKey(p => p.UserId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(p => p.Client)
+                      .WithMany(c => c.Policies)
+                      .HasForeignKey(p => p.ClientId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<AppSettings>(entity =>
@@ -134,6 +156,25 @@ namespace Insurance_Hub.Data
                       .WithMany(w => w.DeliveryLogs)
                       .HasForeignKey(l => l.WebhookEndpointId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<Transaction>(entity =>
+            {
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.Type).HasConversion<string>().HasMaxLength(30);
+                entity.Property(t => t.Amount).HasColumnType("numeric(10,2)");
+                entity.Property(t => t.PeriodMonth).IsRequired().HasMaxLength(7);
+                entity.Property(t => t.Notes).HasMaxLength(500);
+
+                entity.HasOne(t => t.Policy)
+                      .WithMany()
+                      .HasForeignKey(t => t.PolicyId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(t => t.Client)
+                      .WithMany()
+                      .HasForeignKey(t => t.ClientId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
