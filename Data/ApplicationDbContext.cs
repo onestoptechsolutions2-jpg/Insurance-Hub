@@ -24,6 +24,7 @@ namespace Insurance_Hub.Data
         public DbSet<WebhookEndpoint> WebhookEndpoints => Set<WebhookEndpoint>();
         public DbSet<WebhookDeliveryLog> WebhookDeliveryLogs => Set<WebhookDeliveryLog>();
         public DbSet<Transaction> Transactions => Set<Transaction>();
+        public DbSet<Expense> Expenses => Set<Expense>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -156,6 +157,15 @@ namespace Insurance_Hub.Data
                       .WithMany(w => w.DeliveryLogs)
                       .HasForeignKey(l => l.WebhookEndpointId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<Expense>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Amount).HasColumnType("numeric(10,2)");
+                entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Notes).HasMaxLength(500);
+                entity.HasIndex(e => e.SpentAt);
             });
 
             builder.Entity<Transaction>(entity =>

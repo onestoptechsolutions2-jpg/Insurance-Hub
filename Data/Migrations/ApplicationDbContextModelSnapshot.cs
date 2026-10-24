@@ -392,6 +392,40 @@ namespace Insurance_Hub.Data.Migrations
                     b.ToTable("QuoteRequests");
                 });
 
+            modelBuilder.Entity("Insurance_Hub.Models.Expense", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SpentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SpentAt");
+
+                    b.ToTable("Expenses");
+                });
+
             modelBuilder.Entity("Insurance_Hub.Models.Transaction", b =>
                 {
                     b.Property<int>("Id")

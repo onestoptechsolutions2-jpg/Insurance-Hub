@@ -1,0 +1,73 @@
+@model List<Insurance_Hub.Controllers.AdminAccountingController.BookLine>
+
+@{
+    var periodMonth = ViewBag.PeriodMonth as string;
+    var moneyIn = Model.Where(l => l.IsIn).Sum(l => l.Amount);
+    var moneyOut = Model.Where(l => !l.IsIn).Sum(l => l.Amount);
+    var profit = moneyIn - moneyOut;
+}
+
+<div class="a-page-header">
+    <div>
+        <h1 class="a-page-title">Cash book</h1>
+        <p class="a-page-sub">Commission and premiums appear automatically. Type an expense like <em>paid 3500 airtime</em> or <em>spent 2k fuel</em>.</p>
+    </div>
+    <div class="a-filter-bar">
+        <form method="get" style="display:flex;gap:8px;align-items:center">
+            <input type="month" name="month" class="a-input" value="@periodMonth" onchange="this.form.submit()" />
+        </form>
+        <a href="/admin/accounting" class="a-btn-ghost">← Accounting</a>
+    </div>
+</div>
+
+@if (TempData["Error"] is string err)
+{
+    <div class="a-empty" style="color:#b91c1c">@err</div>
+}
+
+<div class="a-stats-row">
+    <div class="a-stat-tile"><div class="a-stat-label">Money in</div><div class="a-stat-value">KES @moneyIn.ToString("N0")</div></div>
+    <div class="a-stat-tile"><div class="a-stat-label">Money out</div><div class="a-stat-value">KES @moneyOut.ToString("N0")</div></div>
+    <div class="a-stat-tile"><div class="a-stat-label">@(profit >= 0 ? "Profit" : "Loss")</div><div class="a-stat-value">KES @Math.Abs(profit).ToString("N0")</div></div>
+</div>
+
+<div style="max-width:640px;margin:16px auto;padding:12px;border-radius:12px;background:#ece5dd">
+    @if (!Model.Any())
+    {
+        <p style="text-align:center;color:#6b7280;padding:24px 0">Nothing recorded this month yet.</p>
+    }
+    @foreach (var day in Model.GroupBy(l => l.Date.Date))
+    {
+        <div style="text-align:center;margin:10px 0 6px">
+            <span style="background:#fff;border-radius:999px;padding:2px 12px;font-size:11px;color:#6b7280">@day.Key.ToString("ddd d MMM")</span>
+        </div>
+        foreach (var l in day)
+        {
+            <div style="display:flex;justify-content:@(l.IsIn ? "flex-start" : "flex-end");margin:4px 0">
+                <div style="max-width:85%;border-radius:10px;padding:8px 12px;font-size:14px;box-shadow:0 1px 1px rgba(0,0,0,.1);background:@(l.IsIn ? "#fff" : "#dcf8c6")">
+                    <div style="font-weight:600">@(l.IsIn ? "+" : "−") KES @l.Amount.ToString("N0")</div>
+                    <div>@l.Title</div>
+                    <div style="display:flex;gap:8px;font-size:11px;color:#6b7280">
+                        <span>@l.Category</span>
+                        @if (l.ExpenseId is int eid)
+                        {
+                            <form method="post" action="/admin/accounting/book/delete" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@eid" />
+                                <input type="hidden" name="month" value="@periodMonth" />
+                                <button style="background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer;font-size:11px">remove</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<form method="post" action="/admin/accounting/book/add" style="max-width:640px;margin:0 auto;display:flex;gap:8px;position:sticky;bottom:8px">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="month" value="@periodMonth" />
+    <input name="text" required autocomplete="off" class="a-input" style="flex:1;border-radius:999px;padding:10px 16px" placeholder="Type e.g. paid 3500 airtime" />
+    <button class="a-btn-primary" style="border-radius:999px">Send</button>
+</form>
