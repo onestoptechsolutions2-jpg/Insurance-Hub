@@ -29,13 +29,13 @@ RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Expose HTTP only — Coolify/reverse proxy handles TLS
-EXPOSE 8080
+EXPOSE 5000
 
-ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Health check using wget (available in aspnet base image)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:8080/health || exit 1
+  CMD wget -qO- http://localhost:5000/health || exit 1
 
 ENTRYPOINT ["dotnet", "Insurance Hub.dll"]
