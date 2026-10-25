@@ -392,6 +392,43 @@ namespace Insurance_Hub.Data.Migrations
                     b.ToTable("QuoteRequests");
                 });
 
+            modelBuilder.Entity("Insurance_Hub.Models.ChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("FromApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OptionsJson")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Resolved")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("ChatMessages");
+                });
+
             modelBuilder.Entity("Insurance_Hub.Models.Expense", b =>
                 {
                     b.Property<int>("Id")

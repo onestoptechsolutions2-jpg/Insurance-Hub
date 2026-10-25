@@ -20,11 +20,6 @@
     </div>
 </div>
 
-@if (TempData["Error"] is string err)
-{
-    <div class="a-empty" style="color:#b91c1c">@err</div>
-}
-
 <div class="a-stats-row">
     <div class="a-stat-tile"><div class="a-stat-label">Money in</div><div class="a-stat-value">KES @moneyIn.ToString("N0")</div></div>
     <div class="a-stat-tile"><div class="a-stat-label">Money out</div><div class="a-stat-value">KES @moneyOut.ToString("N0")</div></div>

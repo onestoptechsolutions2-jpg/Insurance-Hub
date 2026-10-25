@@ -151,7 +151,7 @@ namespace Insurance_Hub.Controllers
         };
 
         /// <summary>"paid 3,500 airtime" or "spent 2k fuel" → amount, category, note. Null when there is no amount.</summary>
-        private static (decimal Amount, string Category, string Notes)? ParseExpense(string? text)
+        public static (decimal Amount, string Category, string Notes)? ParseExpense(string? text)
         {
             if (string.IsNullOrWhiteSpace(text)) return null;
             var t = text.Trim();
