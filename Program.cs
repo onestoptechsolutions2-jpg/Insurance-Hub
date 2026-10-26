@@ -56,6 +56,7 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<ChatAssistant>();
 builder.Services.AddHostedService<PolicyReminderService>();
 
 // ── Outbound webhooks ───────────────────────────────────────────────────────

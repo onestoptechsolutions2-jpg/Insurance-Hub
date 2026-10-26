@@ -24,7 +24,7 @@ namespace Insurance_Hub.Controllers
         }
 
         [HttpGet("")]
-        public IActionResult Index() => RedirectToAction(nameof(Quotes));
+        public IActionResult Index() => Redirect("/admin/chat");
 
         // ── QUOTES ────────────────────────────────────────────────────────────
 
