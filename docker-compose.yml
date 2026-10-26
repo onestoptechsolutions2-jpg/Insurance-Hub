@@ -4,7 +4,11 @@ version: "3.9"
 # Usage:
 #   docker compose up --build
 #   App  → http://localhost:5000
-#   DB   → localhost:5432 (postgres/postgres)
+#   DB   → not published to the host (add a "5432:5432" port to the db service for local tools)
+#
+# Database password: set DB_PASSWORD (Coolify → Environment Variables). It defaults to
+# "postgres" so existing volumes keep working. NOTE: Postgres only reads the password when
+# it first creates its data volume; to change it later, run ALTER USER inside the db container.
 #
 # Stop & remove volumes:
 #   docker compose down -v
@@ -17,7 +21,7 @@ services:
     environment:
       POSTGRES_DB:       InsuranceHub
       POSTGRES_USER:     postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -25,8 +29,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    ports:
-      - "5432:5432"   # expose for local tools (TablePlus, pgAdmin, etc.)
 
   app:
     build:
@@ -39,7 +41,7 @@ services:
       ASPNETCORE_ENVIRONMENT:          Production
       DOTNET_RUNNING_IN_CONTAINER:     "true"
       DatabaseProvider:                PostgreSQL
-      ConnectionStrings__PostgreSQL:   "Host=db;Port=5432;Database=InsuranceHub;Username=postgres;Password=postgres"
+      ConnectionStrings__PostgreSQL:   "Host=db;Port=5432;Database=InsuranceHub;Username=postgres;Password=${DB_PASSWORD:-postgres}"
 
       # ── Email (fill in or leave blank to disable) ──
       EmailSettings__SmtpHost:         ""
