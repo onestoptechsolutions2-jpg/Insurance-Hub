@@ -1,23 +1,40 @@
 @* Previous / next links for a long admin list. Controllers set ViewBag.Page and ViewBag.TotalPages. *@
 @{
-    int page = ViewBag.Page is int p ? p : 1;
-    int totalPages = ViewBag.TotalPages is int t ? t : 1;
+    int currentPage = ViewBag.Page is int ? (int)ViewBag.Page : 1;
+    int pageCount = ViewBag.TotalPages is int ? (int)ViewBag.TotalPages : 1;
+    var request = ViewContext.HttpContext.Request;
 
     string Href(int target)
     {
-        var parts = Context.Request.Query
-            .Where(q => !string.Equals(q.Key, "page", StringComparison.OrdinalIgnoreCase))
-            .Select(q => Uri.EscapeDataString(q.Key) + "=" + Uri.EscapeDataString(q.Value.ToString()))
-            .ToList();
+        var parts = new List<string>();
+        foreach (var item in request.Query)
+        {
+            if (string.Equals(item.Key, "page", StringComparison.OrdinalIgnoreCase)) continue;
+            parts.Add(Uri.EscapeDataString(item.Key) + "=" + Uri.EscapeDataString(item.Value.ToString()));
+        }
         if (target > 1) parts.Add("page=" + target);
-        return Context.Request.Path + (parts.Count > 0 ? "?" + string.Join("&", parts) : "");
+        return request.Path.Value + (parts.Count > 0 ? "?" + string.Join("&", parts) : "");
     }
 }
-@if (totalPages > 1)
+@if (pageCount > 1)
 {
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:14px">
-        @if (page > 1) { <a class="a-btn-ghost" href="@Href(page - 1)">← Newer</a> } else { <span></span> }
-        <span style="color:#6b7280">Page @page of @totalPages</span>
-        @if (page < totalPages) { <a class="a-btn-ghost" href="@Href(page + 1)">Older →</a> } else { <span></span> }
+        @if (currentPage > 1)
+        {
+            <a class="a-btn-ghost" href="@Href(currentPage - 1)">← Newer</a>
+        }
+        else
+        {
+            <span></span>
+        }
+        <span style="color:#6b7280">Showing set @currentPage of @pageCount</span>
+        @if (currentPage < pageCount)
+        {
+            <a class="a-btn-ghost" href="@Href(currentPage + 1)">Older →</a>
+        }
+        else
+        {
+            <span></span>
+        }
     </div>
 }
