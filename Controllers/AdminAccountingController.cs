@@ -1,5 +1,6 @@
 using Insurance_Hub.Data;
 using Insurance_Hub.Models;
+using Insurance_Hub.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -67,14 +68,20 @@ namespace Insurance_Hub.Controllers
 
         // GET /admin/accounting/ledger — full history, optionally filtered
         [HttpGet("ledger")]
-        public async Task<IActionResult> Ledger(int? clientId, string? month)
+        public async Task<IActionResult> Ledger(int? clientId, string? month, int? page)
         {
             var query = _db.Transactions.Include(t => t.Client).Include(t => t.Policy).AsQueryable();
 
             if (clientId is int cid) query = query.Where(t => t.ClientId == cid);
             if (!string.IsNullOrWhiteSpace(month)) query = query.Where(t => t.PeriodMonth == month);
 
-            var transactions = await query.OrderByDescending(t => t.RecordedAt).ToListAsync();
+            var pageNo = Paging.Normalize(page);
+            var total = await query.CountAsync();
+            var transactions = await query.OrderByDescending(t => t.RecordedAt).ThenByDescending(t => t.Id)
+                .Skip((pageNo - 1) * Paging.PageSize).Take(Paging.PageSize).ToListAsync();
+            ViewBag.Page = pageNo;
+            ViewBag.TotalPages = Paging.TotalPages(total);
+            ViewBag.Total = total;
             return View("~/Views/Admin/AccountingLedger.cshtml", transactions);
         }
 

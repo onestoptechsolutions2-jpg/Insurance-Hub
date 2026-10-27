@@ -77,6 +77,7 @@ namespace Insurance_Hub.Data
             builder.Entity<QuoteRequest>(entity =>
             {
                 entity.HasKey(q => q.Id);
+                entity.HasIndex(q => q.RequestedAt);
                 entity.Property(q => q.FullName).IsRequired().HasMaxLength(200);
                 entity.Property(q => q.Email).IsRequired().HasMaxLength(254);
                 entity.Property(q => q.PlanName).IsRequired().HasMaxLength(200);
@@ -108,6 +109,7 @@ namespace Insurance_Hub.Data
             builder.Entity<UserPolicy>(entity =>
             {
                 entity.HasKey(p => p.Id);
+                entity.HasIndex(p => p.RenewalDate);
                 entity.Property(p => p.PolicyName).IsRequired().HasMaxLength(200);
                 entity.Property(p => p.ProviderName).IsRequired().HasMaxLength(200);
                 entity.Property(p => p.InsuranceType).HasMaxLength(50);
@@ -180,6 +182,8 @@ namespace Insurance_Hub.Data
             builder.Entity<Transaction>(entity =>
             {
                 entity.HasKey(t => t.Id);
+                entity.HasIndex(t => t.PeriodMonth);
+                entity.HasIndex(t => t.RecordedAt);
                 entity.Property(t => t.Type).HasConversion<string>().HasMaxLength(30);
                 entity.Property(t => t.Amount).HasColumnType("numeric(10,2)");
                 entity.Property(t => t.PeriodMonth).IsRequired().HasMaxLength(7);

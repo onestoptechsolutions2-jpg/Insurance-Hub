@@ -66,7 +66,7 @@ builder.Services.AddHttpClient<IWebhookDispatcher, WebhookDispatcher>(c => c.Tim
 builder.Services.AddHttpClient<ISmsService, AfricasTalkingSmsService>(c => c.Timeout = TimeSpan.FromSeconds(10));
 
 // ── Health checks ──────────────────────────────────────────────────────────
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
 // ── Forwarded headers (Coolify / Traefik reverse proxy) ───────────────────
 // XForwardedHost  → lets Url.Action / RedirectToAction use the public domain
