@@ -1,4 +1,5 @@
 using Insurance_Hub.Data;
+using Insurance_Hub.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ namespace Insurance_Hub.Controllers
 
         // GET /admin/clients?search=jane
         [HttpGet("")]
-        public async Task<IActionResult> Index(string? search)
+        public async Task<IActionResult> Index(string? search, int? page)
         {
             var query = _db.Clients.AsQueryable();
 
@@ -25,7 +26,13 @@ namespace Insurance_Hub.Controllers
                 query = query.Where(c => c.FullName.ToLower().Contains(term) || c.Email.ToLower().Contains(term));
             }
 
-            var clients = await query.OrderBy(c => c.FullName).ToListAsync();
+            var pageNo = Paging.Normalize(page);
+            var total = await query.CountAsync();
+            var clients = await query.OrderBy(c => c.FullName).ThenBy(c => c.Id)
+                .Skip((pageNo - 1) * Paging.PageSize).Take(Paging.PageSize).ToListAsync();
+            ViewBag.Page = pageNo;
+            ViewBag.TotalPages = Paging.TotalPages(total);
+            ViewBag.Total = total;
             ViewBag.Search = search;
             return View("~/Views/Admin/Clients.cshtml", clients);
         }

@@ -4,7 +4,7 @@
 <div class="a-page-header">
     <div>
         <h1 class="a-page-title">Transaction Ledger</h1>
-        <p class="a-page-sub">@Model.Count transaction(s)</p>
+        <p class="a-page-sub">@ViewBag.Total transaction(s)</p>
     </div>
     <a href="/admin/accounting" class="a-btn-ghost">← Back to Accounting</a>
 </div>
@@ -49,3 +49,5 @@ else
         </table>
     </div>
 }
+
+@await Html.PartialAsync("_Pager")

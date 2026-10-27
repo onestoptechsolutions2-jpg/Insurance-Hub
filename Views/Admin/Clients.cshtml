@@ -3,7 +3,7 @@
 <div class="a-page-header">
     <div>
         <h1 class="a-page-title">Clients</h1>
-        <p class="a-page-sub">@Model.Count client(s)</p>
+        <p class="a-page-sub">@ViewBag.Total client(s)</p>
     </div>
     <form method="get" style="display:flex;gap:8px">
         <input type="text" name="search" class="a-input" placeholder="Search name or email…" value="@(ViewBag.Search as string)" />
@@ -56,3 +56,5 @@ else
         </table>
     </div>
 }
+
+@await Html.PartialAsync("_Pager")

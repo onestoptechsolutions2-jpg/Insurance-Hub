@@ -389,6 +389,8 @@ namespace Insurance_Hub.Data.Migrations
 
                     b.HasIndex("PlanId");
 
+                    b.HasIndex("RequestedAt");
+
                     b.ToTable("QuoteRequests");
                 });
 
@@ -504,6 +506,10 @@ namespace Insurance_Hub.Data.Migrations
 
                     b.HasIndex("PolicyId");
 
+                    b.HasIndex("PeriodMonth");
+
+                    b.HasIndex("RecordedAt");
+
                     b.ToTable("Transactions");
                 });
 
@@ -564,6 +570,8 @@ namespace Insurance_Hub.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
+
+                    b.HasIndex("RenewalDate");
 
                     b.ToTable("UserPolicies");
                 });

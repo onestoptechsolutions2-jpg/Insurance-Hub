@@ -29,14 +29,19 @@ namespace Insurance_Hub.Controllers
         // ── QUOTES ────────────────────────────────────────────────────────────
 
         [HttpGet("quotes")]
-        public async Task<IActionResult> Quotes(string? status)
+        public async Task<IActionResult> Quotes(string? status, int? page)
         {
             var query = _db.QuoteRequests.Include(q => q.Client).AsQueryable();
 
             if (Enum.TryParse<QuoteStatus>(status, out var parsed))
                 query = query.Where(q => q.Status == parsed);
 
-            var quotes = await query.OrderByDescending(q => q.RequestedAt).ToListAsync();
+            var pageNo = Paging.Normalize(page);
+            var total = await query.CountAsync();
+            var quotes = await query.OrderByDescending(q => q.RequestedAt).ThenByDescending(q => q.Id)
+                .Skip((pageNo - 1) * Paging.PageSize).Take(Paging.PageSize).ToListAsync();
+            ViewBag.Page = pageNo;
+            ViewBag.TotalPages = Paging.TotalPages(total);
             ViewBag.StatusFilter = status;
             return View(quotes);
         }
