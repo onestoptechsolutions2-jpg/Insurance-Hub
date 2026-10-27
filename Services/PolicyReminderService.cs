@@ -16,6 +16,13 @@ namespace Insurance_Hub.Services
         // Run once every 24 hours
         private static readonly TimeSpan Interval = TimeSpan.FromHours(24);
 
+        // If any reminder failed, try again soon instead of waiting a full day.
+        // Safe to repeat: policies already reminded today are skipped.
+        private static readonly TimeSpan RetryInterval = TimeSpan.FromMinutes(15);
+
+        // Postgres advisory lock so only one app instance sends reminders at a time.
+        private const long LockKey = 727402;
+
         public PolicyReminderService(
             IServiceScopeFactory scopeFactory,
             ILogger<PolicyReminderService> logger)
@@ -33,20 +40,23 @@ namespace Insurance_Hub.Services
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                var failed = false;
                 try
                 {
-                    await SendDueRemindersAsync(stoppingToken);
+                    failed = await SendDueRemindersAsync(stoppingToken);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
+                    failed = true;
                     _logger.LogError(ex, "Error in PolicyReminderService.");
                 }
 
-                await Task.Delay(Interval, stoppingToken);
+                await Task.Delay(failed ? RetryInterval : Interval, stoppingToken);
             }
         }
 
-        private async Task SendDueRemindersAsync(CancellationToken ct)
+        /// <summary>Returns true if anything failed and the run should be retried soon.</summary>
+        private async Task<bool> SendDueRemindersAsync(CancellationToken ct)
         {
             using var scope        = _scopeFactory.CreateScope();
             var db                 = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -54,6 +64,41 @@ namespace Insurance_Hub.Services
             var webhooks           = scope.ServiceProvider.GetRequiredService<IWebhookDispatcher>();
             var smsService         = scope.ServiceProvider.GetRequiredService<ISmsService>();
 
+            var isPostgres = db.Database.ProviderName?.Contains("Npgsql") == true;
+            if (isPostgres)
+            {
+                // The lock belongs to this connection, so keep it open until we unlock.
+                await db.Database.OpenConnectionAsync(ct);
+                var gotLock = (await db.Database
+                    .SqlQuery<bool>($"SELECT pg_try_advisory_lock({LockKey}) AS \"Value\"")
+                    .ToListAsync(ct)).FirstOrDefault();
+                if (!gotLock)
+                {
+                    _logger.LogInformation("Another instance is sending reminders; skipping this run.");
+                    await db.Database.CloseConnectionAsync();
+                    return false;
+                }
+            }
+
+            try
+            {
+                return await SendRemindersAsync(db, emailService, webhooks, smsService, ct);
+            }
+            finally
+            {
+                if (isPostgres)
+                {
+                    await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_unlock(" + LockKey + ")");
+                    await db.Database.CloseConnectionAsync();
+                }
+            }
+        }
+
+        private async Task<bool> SendRemindersAsync(
+            ApplicationDbContext db, IEmailService emailService, IWebhookDispatcher webhooks,
+            ISmsService smsService, CancellationToken ct)
+        {
+            var anyFailed = false;
             var today = DateTime.UtcNow.Date;
 
             // Days before renewal at which we send reminders
@@ -76,49 +121,61 @@ namespace Insurance_Hub.Services
                 {
                     if (policy.Client?.Email is null) continue;
 
-                    await emailService.SendPolicyReminderAsync(new PolicyReminderData(
-                        ClientName:    policy.Client.FullName.Length > 0
-                                           ? policy.Client.FullName
-                                           : policy.Client.Email,
-                        ClientEmail:   policy.Client.Email,
-                        PolicyName:    policy.PolicyName,
-                        ProviderName:  policy.ProviderName,
-                        InsuranceType: policy.InsuranceType,
-                        RenewalDate:   policy.RenewalDate,
-                        DaysRemaining: days,
-                        MonthlyPremium: policy.MonthlyPremium
-                    ));
-
-                    if (!string.IsNullOrWhiteSpace(policy.Client.Phone))
+                    // One policy failing must not stop the others, and each success is
+                    // saved straight away so a later crash can't cause a duplicate reminder.
+                    try
                     {
-                        await smsService.SendSmsAsync(
-                            policy.Client.Phone,
-                            $"Reminder: your {policy.PolicyName} policy with {policy.ProviderName} " +
-                            $"renews in {days} days ({policy.RenewalDate:d MMM yyyy}). Reply to discuss options.");
+                        await emailService.SendPolicyReminderAsync(new PolicyReminderData(
+                            ClientName:    policy.Client.FullName.Length > 0
+                                               ? policy.Client.FullName
+                                               : policy.Client.Email,
+                            ClientEmail:   policy.Client.Email,
+                            PolicyName:    policy.PolicyName,
+                            ProviderName:  policy.ProviderName,
+                            InsuranceType: policy.InsuranceType,
+                            RenewalDate:   policy.RenewalDate,
+                            DaysRemaining: days,
+                            MonthlyPremium: policy.MonthlyPremium
+                        ));
+
+                        // The email went out: record it now, before the optional extras.
+                        policy.LastReminderSentAt = DateTime.UtcNow;
+                        await db.SaveChangesAsync(ct);
+
+                        if (!string.IsNullOrWhiteSpace(policy.Client.Phone))
+                        {
+                            await smsService.SendSmsAsync(
+                                policy.Client.Phone,
+                                $"Reminder: your {policy.PolicyName} policy with {policy.ProviderName} " +
+                                $"renews in {days} days ({policy.RenewalDate:d MMM yyyy}). Reply to discuss options.");
+                        }
+
+                        await webhooks.DispatchAsync(WebhookEventType.PolicyRenewalDue, new
+                        {
+                            policyId       = policy.Id,
+                            clientId       = policy.ClientId,
+                            clientEmail    = policy.Client.Email,
+                            policyName     = policy.PolicyName,
+                            providerName   = policy.ProviderName,
+                            insuranceType  = policy.InsuranceType,
+                            renewalDate    = policy.RenewalDate,
+                            daysRemaining  = days,
+                            monthlyPremium = policy.MonthlyPremium
+                        });
+
+                        _logger.LogInformation(
+                            "Reminder sent: {PolicyName} for {Email} ({Days} days)",
+                            policy.PolicyName, policy.Client.Email, days);
                     }
-
-                    await webhooks.DispatchAsync(WebhookEventType.PolicyRenewalDue, new
+                    catch (Exception ex) when (ex is not OperationCanceledException)
                     {
-                        policyId       = policy.Id,
-                        clientId       = policy.ClientId,
-                        clientEmail    = policy.Client.Email,
-                        policyName     = policy.PolicyName,
-                        providerName   = policy.ProviderName,
-                        insuranceType  = policy.InsuranceType,
-                        renewalDate    = policy.RenewalDate,
-                        daysRemaining  = days,
-                        monthlyPremium = policy.MonthlyPremium
-                    });
-
-                    policy.LastReminderSentAt = DateTime.UtcNow;
-                    _logger.LogInformation(
-                        "Reminder sent: {PolicyName} for {Email} ({Days} days)",
-                        policy.PolicyName, policy.Client.Email, days);
+                        anyFailed = true;
+                        _logger.LogError(ex, "Reminder failed for policy {PolicyId}; will retry.", policy.Id);
+                    }
                 }
-
-                if (duePolicies.Count > 0)
-                    await db.SaveChangesAsync(ct);
             }
+
+            return anyFailed;
         }
     }
 }

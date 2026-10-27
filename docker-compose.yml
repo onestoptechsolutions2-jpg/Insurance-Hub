@@ -55,11 +55,40 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       start_period: 40s
       retries: 3
 
+  # Nightly database backup: a compressed pg_dump every 24 hours into the
+  # backups volume, keeping 14 days. An empty or failed dump is discarded and
+  # the previous good backup is kept.
+  # Restore:  gunzip -c insurancehub-YYYY-MM-DD.sql.gz | psql -h db -U postgres InsuranceHub
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${DB_PASSWORD:-postgres}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          f=/backups/insurancehub-$$(date +%F).sql.gz
+          if pg_dump -h db -U postgres InsuranceHub | gzip > "$$f.tmp" && [ "$$(gzip -dc "$$f.tmp" | wc -c)" -gt 1000 ]; then
+            mv "$$f.tmp" "$$f" && echo "backup ok: $$f"
+          else
+            rm -f "$$f.tmp"; echo "backup FAILED" >&2
+          fi
+          find /backups -name 'insurancehub-*.sql.gz' -mtime +14 -delete
+          sleep 86400
+        done
+
 volumes:
   pgdata:
+  backups:
